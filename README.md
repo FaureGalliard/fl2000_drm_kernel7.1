@@ -176,13 +176,12 @@ GPL v2 - See [LICENSE](./LICENSE) file for details.
 ## Contributors
 
 ### Original Project
-- **Fresco Logic, Inc.** - Hardware design and original chip specification
 - **Marcus Comstedt** (@zeldin) - Original driver development
 - **Marcel Waldvogel** (@MarcelWaldvogel) - Driver improvements
 - **Artem Mygaiev** - Original DRM driver implementation and maintainer
 
 ### Kernel 6.x Modernization (2026)
-- **Samuel** - Complete driver modernization for Linux Kernel 6.x
+- **Samuel** - Used original code and updated for Linux Kernel 6.x
 
 ### What Was Done
 
