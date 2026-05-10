@@ -173,11 +173,42 @@ fl2000_drm/
 
 GPL v2 - See [LICENSE](./LICENSE) file for details.
 
-## Credits
+## Contributors
 
-- Original driver: [Artem Mygaiev](https://github.com/klogg/fl2000_drm)
-- Kernel 6.x modernization: Samuel
-- Based on work by Fresco Logic, Inc.
+### Original Project
+- **Fresco Logic, Inc.** - Hardware design and original chip specification
+- **Artem Mygaiev** - Original DRM driver implementation and maintainer
+
+### Kernel 6.x Modernization (2026)
+- **Samuel** - Complete driver modernization for Linux Kernel 6.x
+
+### What Was Done
+
+#### Modernization for Kernel 6.x:
+1. **Updated DRM Headers**
+   - Removed deprecated headers (`drm_fbdev_generic.h`, `drm_crtc_helper.h`, `drm_ioctl.h`)
+   - Added modern DRM headers (`drm_device.h`, `drm_client.h`, `drm_damage_helper.h`)
+
+2. **Fixed Deprecated API Calls**
+   - Changed `lastclose` → `postclose` in `drm_driver`
+   - Updated `it66121_bridge_attach()` signature to include encoder parameter
+   - Changed `drm_helper_hpd_irq_event()` → `drm_bridge_hpd_notify()`
+   - Replaced `drm_do_get_edid()` with `drm_get_edid()`
+
+3. **Added Secure Boot Support**
+   - Created `install.sh` script with automatic module signing
+   - MOK key generation and enrollment support
+
+4. **Documentation**
+   - Improved README.md with installation instructions
+   - Created comprehensive WIKI.md with technical details
+   - Added troubleshooting guides
+
+#### Removed/Disabled Features:
+- `drm_kms_helper_poll_init/fini` - Not needed in modern kernels
+- `drm_plane_enable_fb_damage_clips` - Not compatible
+- `drm_fbdev_generic_setup` - Removed (fbdev emulation is deprecated)
+- `drm_atomic_helper_damage_merged` - Compatibility issues
 
 ## Links
 
