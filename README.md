@@ -123,7 +123,6 @@ fl2000_drm/
 │   └── it66121_registers.h
 ├── Makefile              # Build system
 ├── install.sh            # Installation script
-├── WIKI.md               # Detailed wiki
 └── README.md             # This file
 ```
 
@@ -202,7 +201,7 @@ GPL v2 - See [LICENSE](./LICENSE) file for details.
 
 4. **Documentation**
    - Improved README.md with installation instructions
-   - Created comprehensive WIKI.md with technical details
+   - Created comprehensive GitHub Wiki with technical details
    - Added troubleshooting guides
 
 #### Removed/Disabled Features:
@@ -213,7 +212,7 @@ GPL v2 - See [LICENSE](./LICENSE) file for details.
 
 ## Links
 
-- [Detailed Wiki](./WIKI.md)
+- [GitHub Wiki](https://github.com/Samuv5/fl2000_drm/wiki) - Detailed technical documentation
 - [Original Repository](https://github.com/klogg/fl2000_drm)
 - [Linux DRM Documentation](https://www.kernel.org/doc/html/latest/gpu/drm-kms-helpers.html)
 
