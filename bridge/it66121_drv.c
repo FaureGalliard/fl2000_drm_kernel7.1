@@ -320,7 +320,7 @@ static void it66121_intr_work(struct work_struct *work_item)
 	}
 
 	if (event)
-		drm_helper_hpd_irq_event(priv->bridge.dev);
+		drm_bridge_hpd_notify(&priv->bridge, priv->conn_status);
 
 	queue_delayed_work(priv->work_queue, &priv->work, msecs_to_jiffies(IRQ_POLL_INTRVL));
 }
@@ -402,7 +402,7 @@ static int it66121_connector_get_modes(struct drm_connector *connector)
 	struct edid *edid = priv->edid;
 
 	if (!edid) {
-		edid = drm_do_get_edid(connector, it66121_get_edid_block, priv);
+		edid = drm_get_edid(connector, priv->adapter);
 		if (!edid)
 			return 0;
 
@@ -416,7 +416,7 @@ static int it66121_connector_get_modes(struct drm_connector *connector)
 }
 
 static enum drm_mode_status it66121_connector_mode_valid(struct drm_connector *connector,
-							 struct drm_display_mode *mode)
+							 const struct drm_display_mode *mode)
 {
 	/* TODO: validate mode */
 	UNUSED(connector);
@@ -486,7 +486,8 @@ static const struct component_ops it66121_component_ops = {
 };
 
 /* TODO: rewrite register access properly, add error processing */
-static int it66121_bridge_attach(struct drm_bridge *bridge, enum drm_bridge_attach_flags flags)
+static int it66121_bridge_attach(struct drm_bridge *bridge, struct drm_encoder *encoder,
+				  enum drm_bridge_attach_flags flags)
 {
 	int ret;
 	struct it66121_priv *priv = container_of(bridge, struct it66121_priv, bridge);

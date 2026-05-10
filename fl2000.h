@@ -22,23 +22,30 @@
 #include <linux/dma-mapping.h>
 #include <linux/time.h>
 #include <linux/device.h>
-#include <drm/drm_gem.h>
-#include <drm/drm_prime.h>
-#include <drm/drm_vblank.h>
-#include <drm/drm_ioctl.h>
+
+#include <drm/drm_device.h>
 #include <drm/drm_drv.h>
-#include <drm/drm_fourcc.h>
+#include <drm/drm_gem.h>
+#include <drm/drm_gem_dma_helper.h>
+#include <drm/drm_gem_framebuffer_helper.h>
+#include <drm/drm_fb_dma_helper.h>
 #include <drm/drm_fb_helper.h>
 #include <drm/drm_framebuffer.h>
-#include <drm/drm_fbdev_generic.h>
-#include <drm/drm_gem_framebuffer_helper.h>
-#include <drm/drm_gem_dma_helper.h>
+#include <drm/drm_fourcc.h>
 #include <drm/drm_atomic_helper.h>
-#include <drm/drm_simple_kms_helper.h>
-#include <drm/drm_crtc_helper.h>
+#include <drm/drm_atomic_state_helper.h>
+#include <drm/drm_bridge.h>
+#include <drm/drm_connector.h>
+#include <drm/drm_crtc.h>
+#include <drm/drm_encoder.h>
+#include <drm/drm_plane.h>
 #include <drm/drm_probe_helper.h>
+#include <drm/drm_vblank.h>
+#include <drm/drm_client.h>
+#include <drm/drm_modeset_helper.h>
+#include <drm/drm_simple_kms_helper.h>
+#include <drm/drm_vblank.h>
 #include <drm/drm_damage_helper.h>
-#include <drm/drm_fb_dma_helper.h>
 
 #include "fl2000_registers.h"
 

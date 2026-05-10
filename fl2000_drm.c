@@ -102,9 +102,13 @@ static void fl2000_drm_release(struct drm_device *drm)
 	drm_mode_config_cleanup(drm);
 }
 
+static void fl2000_postclose(struct drm_device *drm, struct drm_file *file)
+{
+}
+
 static struct drm_driver fl2000_drm_driver = {
 	.driver_features = DRIVER_MODESET | DRIVER_GEM | DRIVER_ATOMIC,
-	.lastclose = drm_fb_helper_lastclose,
+	.postclose = fl2000_postclose,
 	.ioctls = NULL,
 	.fops = &fl2000_drm_driver_fops,
 	.release = fl2000_drm_release,
@@ -113,7 +117,6 @@ static struct drm_driver fl2000_drm_driver = {
 
 	.name = DRM_DRIVER_NAME,
 	.desc = DRM_DRIVER_DESC,
-	.date = DRM_DRIVER_DATE,
 	.major = DRM_DRIVER_MAJOR,
 	.minor = DRM_DRIVER_MINOR,
 	.patchlevel = DRM_DRIVER_PATCHLEVEL,
@@ -431,7 +434,6 @@ static void fl2000_drm_if_release(struct device *dev, void *res)
 	fl2000_intr_destroy(usb_dev);
 
 	/* Prepare to DRM device shutdown */
-	drm_kms_helper_poll_fini(drm);
 	drm_dev_unplug(drm);
 	drm_dev_put(drm);
 }
@@ -511,10 +513,6 @@ int fl2000_drm_bind(struct device *master)
 		return ret;
 	}
 
-	drm_kms_helper_poll_init(drm);
-
-	drm_plane_enable_fb_damage_clips(&drm_if->pipe.plane);
-
 	ret = drm_dev_register(drm, 0);
 	if (ret) {
 		dev_err(drm->dev, "Cannot register DRM device (%d)", ret);
@@ -523,8 +521,6 @@ int fl2000_drm_bind(struct device *master)
 
 	fl2000_reset(usb_dev);
 	fl2000_usb_magic(usb_dev);
-
-	drm_fbdev_generic_setup(drm, FL2000_FB_BPP);
 
 	return 0;
 }
