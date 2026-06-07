@@ -44,13 +44,7 @@ struct it66121_priv {
 	bool dvi_mode;
 };
 
-/* XXX: Only one instance of IT66121 is supported!!!
- *  - need to have a way to configure several I2C buses to scan
- *  - need to have a list of objects for registration / deregistration
- */
 static struct it66121_priv *ctx;
-static int i2c_bus_num;
-module_param(i2c_bus_num, int, 0660);
 
 static const struct regmap_range_cfg it66121_regmap_banks[] = {
 	/* Do not put common registers to any range, this will lead to skipping "bank" configuration
@@ -325,77 +319,6 @@ static void it66121_intr_work(struct work_struct *work_item)
 	queue_delayed_work(priv->work_queue, &priv->work, msecs_to_jiffies(IRQ_POLL_INTRVL));
 }
 
-static int it66121_get_edid_block(void *context, u8 *buf, unsigned int block, size_t len)
-{
-	int ret;
-	size_t remain = len;
-	unsigned int val;
-	unsigned int segment = block >> 1;
-	unsigned int offset = block & 1 ? 128 : 0;
-	static const u8 header[EDID_LOSS_LEN] = { 0x00, 0xFF, 0xFF };
-	struct it66121_priv *priv = context;
-
-	/* Abort DDC */
-	ret = it66121_abort_ddc_ops(priv);
-	if (ret)
-		return ret;
-
-	/* Statically fill first 3 bytes (due to EDID reading HW bug) */
-	while ((offset < EDID_LOSS_LEN) && (remain > 0)) {
-		*(buf++) = header[offset];
-		remain--;
-		offset++;
-	}
-
-	while (remain > 0) {
-		/* Add bytes that will be lost during EDID read */
-		size_t size = remain + EDID_LOSS_LEN;
-
-		/* ... and check size fits FIFO */
-		size = size > EDID_FIFO_SIZE ? EDID_FIFO_SIZE : size;
-
-		/* Clear DDC FIFO */
-		ret = it66121_clear_ddc_fifo(priv);
-		if (ret)
-			return ret;
-
-		ret = regmap_write(priv->regmap, IT66121_DDC_ADDRESS, EDID_DDC_ADDR);
-		if (ret)
-			return ret;
-
-		/* Account 3 bytes that will be lost */
-		ret = regmap_write(priv->regmap, IT66121_DDC_OFFSET, offset - EDID_LOSS_LEN);
-		if (ret)
-			return ret;
-
-		ret = regmap_write(priv->regmap, IT66121_DDC_SIZE, (unsigned int)size);
-		if (ret)
-			return ret;
-		ret = regmap_write(priv->regmap, IT66121_DDC_SEGMENT, segment);
-		if (ret)
-			return ret;
-		ret = regmap_write(priv->regmap, IT66121_DDC_COMMAND, DDC_CMD_EDID_READ);
-		if (ret)
-			return ret;
-
-		/* Deduct lost bytes when reading from FIFO */
-		size -= EDID_LOSS_LEN;
-
-		for (int i = 0; i < size; i++) {
-			ret = regmap_read(priv->regmap, IT66121_DDC_RD_FIFO, &val);
-			if (ret)
-				return ret;
-
-			*(buf++) = val & 0xFF;
-		}
-
-		remain -= size;
-		offset += size;
-	}
-
-	return ret;
-}
-
 static int it66121_connector_get_modes(struct drm_connector *connector)
 {
 	struct it66121_priv *priv = container_of(connector, struct it66121_priv, connector);
@@ -556,8 +479,6 @@ static int it66121_bridge_attach(struct drm_bridge *bridge, struct drm_encoder *
 		DRM_ERROR("Cannot attach bridge");
 		return ret;
 	}
-
-	drm_connector_register(&priv->connector);
 
 	/* Start interrupts */
 	regmap_write_bits(priv->regmap, IT66121_INT_MASK_1, IT66121_MASK_DDC, 0);
@@ -813,29 +734,22 @@ static int it66121_i2c_probe(struct i2c_adapter *adapter, unsigned short address
 	return 0;
 }
 
-static struct i2c_client *it66121_i2c_init(void)
+static struct i2c_client *it66121_i2c_init(struct i2c_adapter *adapter)
 {
-	struct i2c_client *client;
 	struct i2c_board_info board_info = { I2C_BOARD_INFO("it66121", 0) };
-	struct i2c_adapter *adapter;
 
 	/* According to datasheet IT66121 addresses are 0x98 or 0x9A including cmd */
 	const unsigned short it66121_addr[] = { (0x98 >> 1), (0x9A >> 1), I2C_CLIENT_END };
 
-	adapter = i2c_get_adapter(i2c_bus_num);
-	if (!adapter)
-		return ERR_PTR(-ENODEV);
-
-	client = i2c_new_scanned_device(adapter, &board_info, it66121_addr, it66121_i2c_probe);
-
-	i2c_put_adapter(adapter);
-
-	return client;
+	return i2c_new_scanned_device(adapter, &board_info, it66121_addr, it66121_i2c_probe);
 }
 
-static void __exit it66121_remove(void)
+void it66121_destroy(void)
 {
 	struct it66121_priv *priv = ctx;
+
+	if (!priv)
+		return;
 
 	cancel_delayed_work_sync(&priv->work);
 
@@ -850,21 +764,26 @@ static void __exit it66121_remove(void)
 	i2c_unregister_device(priv->client);
 
 	kfree(priv);
+	ctx = NULL;
 }
 
-static int __init it66121_probe(void)
+int it66121_create(struct i2c_adapter *adapter)
 {
 	int ret;
 	struct it66121_priv *priv;
+
+	/* Only one instance supported */
+	if (ctx)
+		return 0;
 
 	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
 	if (!priv)
 		return -ENOMEM;
 
-	priv->client = it66121_i2c_init();
+	priv->client = it66121_i2c_init(adapter);
 	if (IS_ERR(priv->client)) {
 		ret = (int)PTR_ERR(priv->client);
-		pr_err("Cannot find IT66121 I2C client");
+		pr_err("Cannot find IT66121 I2C client on adapter %s\n", adapter->name);
 		kfree(priv);
 		return ret;
 	}
@@ -876,15 +795,16 @@ static int __init it66121_probe(void)
 
 	drm_bridge_add(&priv->bridge);
 
-	/* XXX: Store private context properly*/
 	ctx = priv;
 
 	/* Setup work queue for interrupt processing work */
-	priv->work_queue = create_workqueue("work_queue");
+	priv->work_queue = create_workqueue("it66121_work");
 	if (!priv->work_queue) {
 		pr_err("Create interrupt workqueue failed");
 		drm_bridge_remove(&priv->bridge);
+		i2c_unregister_device(priv->client);
 		kfree(priv);
+		ctx = NULL;
 		return -ENOMEM;
 	}
 
@@ -897,16 +817,13 @@ static int __init it66121_probe(void)
 		pr_err("Cannot register IT66121 component");
 		destroy_workqueue(priv->work_queue);
 		drm_bridge_remove(&priv->bridge);
+		i2c_unregister_device(priv->client);
 		kfree(priv);
+		ctx = NULL;
 		return ret;
 	}
 
 	return 0;
 }
-
-module_init(it66121_probe);
-module_exit(it66121_remove);
-
-MODULE_AUTHOR("Artem Mygaiev");
-MODULE_DESCRIPTION("IT66121 HDMI transmitter driver");
-MODULE_LICENSE("GPL v2");
+EXPORT_SYMBOL(it66121_create);
+EXPORT_SYMBOL(it66121_destroy);

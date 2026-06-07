@@ -20,7 +20,7 @@ cd "${DRIVER_DIR}"
 make clean
 make KVER="${KERNEL_VERSION}"
 
-if [ ! -f "fl2000.ko" ] || [ ! -f "it66121.ko" ]; then
+if [ ! -f "fl2000.ko" ]; then
     echo "ERROR: Module compilation failed"
     exit 1
 fi
@@ -43,7 +43,6 @@ echo ""
 echo "=== Installing modules ==="
 mkdir -p "${MODULE_DIR}"
 cp -v fl2000.ko "${MODULE_DIR}/"
-cp -v it66121.ko "${MODULE_DIR}/"
 depmod -a
 
 if [ ${SB_ENABLED} -eq 1 ]; then
@@ -70,7 +69,6 @@ if [ ${SB_ENABLED} -eq 1 ]; then
     if [ -f "${MOK_KEY}" ] && [ -f "${MOK_CERT}" ]; then
         echo "Signing modules with existing key..."
         /usr/bin/sign-file sha256 "${MOK_KEY}" "${MOK_CERT}" "${MODULE_DIR}/fl2000.ko"
-        /usr/bin/sign-file sha256 "${MOK_KEY}" "${MOK_CERT}" "${MODULE_DIR}/it66121.ko"
         
         echo "Modules signed successfully"
     else
@@ -87,13 +85,12 @@ depmod -a
 echo ""
 echo "=== Loading driver ==="
 modprobe -r fl2000 2>/dev/null || true
-modprobe -r it66121 2>/dev/null || true
 modprobe fl2000 || echo "Note: Module loaded but device may not be connected"
 
 echo ""
 echo "=== Checking module status ==="
-lsmod | grep -E "fl2000|it66121" || echo "Module not loaded"
-dmesg | tail -10 | grep -E "fl2000|it66121" || echo "No driver messages in dmesg"
+lsmod | grep fl2000 || echo "Module not loaded"
+dmesg | tail -10 | grep fl2000 || echo "No driver messages in dmesg"
 
 echo ""
 echo "=== Installation complete ==="
@@ -108,5 +105,5 @@ echo "  sudo modprobe fl2000"
 echo ""
 echo "To remove the driver:"
 echo "  sudo modprobe -r fl2000"
-echo "  sudo rm -rf ${MODULE_DIR}/fl2000.ko ${MODULE_DIR}/it66121.ko"
+echo "  sudo rm -f ${MODULE_DIR}/fl2000.ko"
 echo "  sudo depmod -a"

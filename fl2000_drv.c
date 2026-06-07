@@ -5,6 +5,7 @@
  */
 
 #include "fl2000.h"
+#include "bridge/it66121.h"
 
 #define USB_DRIVER_NAME "fl2000_usb"
 
@@ -75,6 +76,9 @@ static struct fl2000_devs *fl2000_get_devices(struct usb_device *usb_dev)
 		return ERR_CAST(devs->adapter);
 
 	component_match_add(&devs->adapter->dev, &devs->match, fl2000_compare, NULL);
+
+	/* Probe IT66121 HDMI bridge on the newly created I2C bus */
+	it66121_create(devs->adapter);
 
 	dev_set_drvdata(&usb_dev->dev, devs);
 

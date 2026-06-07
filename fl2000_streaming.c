@@ -158,7 +158,7 @@ static void fl2000_stream_data_completion(struct urb *urb)
 	if (stream) {
 		spin_lock_irq(&stream->list_lock);
 		list_move_tail(&cur_sb->list, &stream->render_list);
-		spin_unlock(&stream->list_lock);
+		spin_unlock_irq(&stream->list_lock);
 
 		drm_crtc_handle_vblank(stream->crtc);
 
@@ -209,7 +209,7 @@ static void fl2000_stream_work(struct work_struct *work)
 						  list);
 		}
 		list_move_tail(&cur_sb->list, &stream->wait_list);
-		spin_unlock(&stream->list_lock);
+		spin_unlock_irq(&stream->list_lock);
 
 		data_urb = usb_alloc_urb(0, GFP_KERNEL);
 		if (!data_urb) {
@@ -325,7 +325,7 @@ int fl2000_stream_mode_set(struct fl2000_stream *stream, int pixels, u32 bytes_p
 
 int fl2000_stream_enable(struct fl2000_stream *stream)
 {
-	BUG_ON(list_empty(&stream->transmit_list));
+	BUG_ON(list_empty(&stream->render_list));
 
 	sema_init(&stream->work_sem, 0);
 	stream->enabled = true;

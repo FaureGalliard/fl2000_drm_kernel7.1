@@ -30,4 +30,7 @@
 /* HW defect leading to losing 3 first bytes during EDID read operation */
 #define EDID_LOSS_LEN 3
 
+int it66121_create(struct i2c_adapter *adapter);
+void it66121_destroy(void);
+
 #endif /* __IT66121_H__ */

@@ -5,6 +5,7 @@
  */
 
 #include "fl2000.h"
+#include "bridge/it66121.h"
 
 #define DRM_DRIVER_NAME "fl2000_drm"
 #define DRM_DRIVER_DESC "USB-HDMI"
@@ -424,8 +425,9 @@ static void fl2000_drm_if_release(struct device *dev, void *res)
 
 	dev_info(dev, "Unbinding FL2000 master");
 
-	/* Detach bridge */
+	/* Detach bridge and destroy IT66121 */
 	component_unbind_all(dev, drm);
+	it66121_destroy();
 
 	/* Start streaming interface */
 	fl2000_stream_destroy(usb_dev);
@@ -527,7 +529,5 @@ int fl2000_drm_bind(struct device *master)
 
 void fl2000_drm_unbind(struct device *master)
 {
-	struct usb_device *usb_dev = to_usb_device(master->parent);
-
-	devres_release(&usb_dev->dev, fl2000_drm_if_release, NULL, NULL);
+	devres_release(master, fl2000_drm_if_release, NULL, NULL);
 }
