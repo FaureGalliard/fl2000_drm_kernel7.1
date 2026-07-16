@@ -12,7 +12,7 @@ obj-m := fl2000.o
 KVER ?= $(shell uname -r)
 KSRC ?= /lib/modules/$(KVER)/build
 
-EXTRA_CFLAGS := -Wall
+ccflags-y := -Wall
 
 all:	modules
 

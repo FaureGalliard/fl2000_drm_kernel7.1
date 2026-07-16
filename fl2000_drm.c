@@ -9,7 +9,6 @@
 
 #define DRM_DRIVER_NAME "fl2000_drm"
 #define DRM_DRIVER_DESC "USB-HDMI"
-#define DRM_DRIVER_DATE "20181001"
 
 #define DRM_DRIVER_MAJOR      0
 #define DRM_DRIVER_MINOR      0
@@ -97,22 +96,12 @@ struct fl2000_drm_if {
 
 DEFINE_DRM_GEM_DMA_FOPS(fl2000_drm_driver_fops);
 
-static void fl2000_drm_release(struct drm_device *drm)
-{
-	drm_atomic_helper_shutdown(drm);
-	drm_mode_config_cleanup(drm);
-}
-
-static void fl2000_postclose(struct drm_device *drm, struct drm_file *file)
-{
-}
-
+/* Mode config cleanup is managed by drmm_mode_config_init(), and the display
+ * pipeline is shut down on unbind, so no .release callback is needed
+ */
 static struct drm_driver fl2000_drm_driver = {
 	.driver_features = DRIVER_MODESET | DRIVER_GEM | DRIVER_ATOMIC,
-	.postclose = fl2000_postclose,
-	.ioctls = NULL,
 	.fops = &fl2000_drm_driver_fops,
-	.release = fl2000_drm_release,
 
 	DRM_GEM_DMA_DRIVER_OPS_VMAP,
 
@@ -419,25 +408,31 @@ static const struct drm_encoder_helper_funcs fl2000_encoder_funcs = {
 
 static void fl2000_drm_if_release(struct device *dev, void *res)
 {
-	struct fl2000_drm_if *drm_if = res;
+	struct fl2000_drm_if *drm_if = *(struct fl2000_drm_if **)res;
 	struct drm_device *drm = &drm_if->drm;
 	struct usb_device *usb_dev = drm_if->usb_dev;
 
 	dev_info(dev, "Unbinding FL2000 master");
 
+	/* Block userspace access and shut down the display pipeline while all
+	 * the components are still bound
+	 */
+	drm_dev_unplug(drm);
+	drm_atomic_helper_shutdown(drm);
+
 	/* Detach bridge and destroy IT66121 */
 	component_unbind_all(dev, drm);
 	it66121_destroy();
 
-	/* Start streaming interface */
+	/* Stop streaming interface */
 	fl2000_stream_destroy(usb_dev);
 
-	/* Start interrupts interface */
+	/* Stop interrupts interface */
 	fl2000_intr_destroy(usb_dev);
 
-	/* Prepare to DRM device shutdown */
-	drm_dev_unplug(drm);
-	drm_dev_put(drm);
+	/* Final drm_dev_put() is handled by devm from devm_drm_dev_alloc() when
+	 * the master device goes away
+	 */
 }
 
 /* TODO: release on errors! */
@@ -446,6 +441,7 @@ int fl2000_drm_bind(struct device *master)
 	int ret = 0;
 	struct usb_device *usb_dev = to_usb_device(master->parent);
 	struct fl2000_drm_if *drm_if;
+	struct fl2000_drm_if **holder;
 	struct drm_device *drm;
 	struct drm_mode_config *mode_config;
 	u64 dma_mask;
@@ -520,6 +516,15 @@ int fl2000_drm_bind(struct device *master)
 		dev_err(drm->dev, "Cannot register DRM device (%d)", ret);
 		return ret;
 	}
+
+	/* Register devres that fl2000_drm_unbind() releases to tear everything
+	 * down. Note that 'drm_if' itself is managed by devm_drm_dev_alloc()
+	 */
+	holder = devres_alloc(fl2000_drm_if_release, sizeof(*holder), GFP_KERNEL);
+	if (!holder)
+		return -ENOMEM;
+	*holder = drm_if;
+	devres_add(master, holder);
 
 	fl2000_reset(usb_dev);
 	fl2000_usb_magic(usb_dev);

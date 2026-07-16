@@ -482,7 +482,6 @@ static int it66121_bridge_attach(struct drm_bridge *bridge, struct drm_encoder *
 
 	/* Start interrupts */
 	regmap_write_bits(priv->regmap, IT66121_INT_MASK_1, IT66121_MASK_DDC, 0);
-	INIT_DELAYED_WORK(&priv->work, &it66121_intr_work);
 	queue_delayed_work(priv->work_queue, &priv->work, msecs_to_jiffies(IRQ_POLL_INTRVL));
 
 	dev_info(bridge->dev->dev, "Bridge attached");
@@ -758,12 +757,15 @@ void it66121_destroy(void)
 	component_del(&priv->client->dev, &it66121_component_ops);
 
 	kfree(priv->edid);
+	priv->edid = NULL;
 
 	drm_bridge_remove(&priv->bridge);
 
+	/* Drops the devm reference to the bridge; priv is freed together with
+	 * the bridge once DRM releases the remaining references
+	 */
 	i2c_unregister_device(priv->client);
 
-	kfree(priv);
 	ctx = NULL;
 }
 
@@ -771,27 +773,37 @@ int it66121_create(struct i2c_adapter *adapter)
 {
 	int ret;
 	struct it66121_priv *priv;
+	struct i2c_client *client;
 
 	/* Only one instance supported */
 	if (ctx)
 		return 0;
 
-	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
-
-	priv->client = it66121_i2c_init(adapter);
-	if (IS_ERR(priv->client)) {
-		ret = (int)PTR_ERR(priv->client);
+	client = it66121_i2c_init(adapter);
+	if (IS_ERR(client)) {
 		pr_err("Cannot find IT66121 I2C client on adapter %s\n", adapter->name);
-		kfree(priv);
-		return ret;
+		return (int)PTR_ERR(client);
 	}
+
+	/* DRM core takes references on the bridge, so it must be allocated with
+	 * devm_drm_bridge_alloc(). Freeing happens automatically when the last
+	 * reference is dropped after i2c_unregister_device()
+	 */
+	priv = devm_drm_bridge_alloc(&client->dev, struct it66121_priv, bridge,
+				     &it66121_bridge_funcs);
+	if (IS_ERR(priv)) {
+		pr_err("Cannot allocate IT66121 bridge\n");
+		i2c_unregister_device(client);
+		return (int)PTR_ERR(priv);
+	}
+
+	priv->client = client;
+	priv->adapter = adapter;
 
 	it66121_regs_init(priv, priv->client);
 
 	priv->conn_status = connector_status_unknown;
-	priv->bridge.funcs = &it66121_bridge_funcs;
+	INIT_DELAYED_WORK(&priv->work, &it66121_intr_work);
 
 	drm_bridge_add(&priv->bridge);
 
@@ -803,7 +815,6 @@ int it66121_create(struct i2c_adapter *adapter)
 		pr_err("Create interrupt workqueue failed");
 		drm_bridge_remove(&priv->bridge);
 		i2c_unregister_device(priv->client);
-		kfree(priv);
 		ctx = NULL;
 		return -ENOMEM;
 	}
@@ -818,7 +829,6 @@ int it66121_create(struct i2c_adapter *adapter)
 		destroy_workqueue(priv->work_queue);
 		drm_bridge_remove(&priv->bridge);
 		i2c_unregister_device(priv->client);
-		kfree(priv);
 		ctx = NULL;
 		return ret;
 	}

@@ -1,14 +1,14 @@
-# FL2000 USB Display Driver for Linux Kernel 6.x
+# FL2000 USB Display Driver for Linux Kernel 7.x
 
 <p align="center">
   <img src="https://img.shields.io/badge/License-GPL%20v2-blue.svg" alt="License">
-  <img src="https://img.shields.io/badge/Kernel-6.x-green.svg" alt="Kernel Version">
+  <img src="https://img.shields.io/badge/Kernel-6.16%2B%20%2F%207.x-green.svg" alt="Kernel Version">
   <img src="https://img.shields.io/badge/Architecture-x86__64-orange.svg" alt="Architecture">
 </p>
 
 ## Overview
 
-This is a modernized version of the FL2000 DRM driver, updated to work with Linux kernel 6.x and later. The driver supports USB-to-HDMI adapters based on the Fresco Logic FL2000DX chip with the IT66121FN HDMI bridge.
+This is a modernized version of the FL2000 DRM driver, updated to work with Linux kernel 7.x (also builds on kernel 6.16 and later). The driver supports USB-to-HDMI adapters based on the Fresco Logic FL2000DX chip with the IT66121FN HDMI bridge.
 
 ## Features
 
@@ -35,7 +35,7 @@ This is a modernized version of the FL2000 DRM driver, updated to work with Linu
 sudo apt-get update
 sudo apt-get install build-essential linux-headers-$(uname -r)
 
-# Verify kernel version (must be 6.x)
+# Verify kernel version (must be 6.16 or later, including 7.x)
 uname -r
 ```
 
@@ -183,6 +183,29 @@ GPL v2 - See [LICENSE](./LICENSE) file for details.
 - **Samuel** - Used original code and updated for Linux Kernel 6.x
 
 ### What Was Done
+
+#### Port to Kernel 7.x (July 2026):
+1. **Refcounted DRM bridges** (mandatory since kernel 6.16/7.x)
+   - IT66121 bridge is now allocated with `devm_drm_bridge_alloc()` instead of
+     `kzalloc()`; its lifetime is managed by the DRM core reference counting
+   - Removed manual `kfree()` of the bridge private structure (freed by the
+     bridge release once the last reference is dropped)
+2. **Fixed DRM device teardown for hot-unplug**
+   - `drm_dev_unplug()` + `drm_atomic_helper_shutdown()` now run on unbind,
+     before components are detached (same pattern as in-tree USB display
+     drivers such as gm12u320)
+   - Removed double `drm_mode_config_cleanup()` (already managed by
+     `drmm_mode_config_init()`) and a double `drm_dev_put()` (already managed
+     by `devm_drm_dev_alloc()`), both of which caused use-after-free on
+     disconnect
+   - Fixed unbind devres pairing so the teardown callback actually runs
+3. **Fixes found during the port**
+   - EDID reads no longer dereference a NULL I2C adapter
+     (`priv->adapter` was never assigned)
+   - Interrupt polling work is initialized once at bridge creation, so
+     `cancel_delayed_work_sync()` can no longer touch an uninitialized work
+4. **Build system**
+   - Replaced deprecated `EXTRA_CFLAGS` with `ccflags-y`
 
 #### Modernization for Kernel 6.x:
 1. **Updated DRM Headers**
