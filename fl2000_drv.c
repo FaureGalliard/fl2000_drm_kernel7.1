@@ -30,6 +30,7 @@ MODULE_DEVICE_TABLE(usb, fl2000_id_table);
 struct fl2000_devs {
 	struct regmap *regmap;
 	struct i2c_adapter *adapter;
+	struct i2c_client *bridge_client;
 	struct component_match *match;
 	int active_if;
 };
@@ -42,13 +43,16 @@ static struct component_master_ops fl2000_master_ops = {
 static int fl2000_compare(struct device *dev, void *data)
 {
 	struct i2c_client *client = i2c_verify_client(dev);
+	struct i2c_adapter *adapter = data;
 	static const char *const fl2000_supported_bridges[] = {
 		"it66121", /* IT66121 driver name*/
 	};
 
-	UNUSED(data);
-
-	if (!client)
+	/* Only match clients sitting on this FL2000 instance's own I2C bus: a
+	 * client with a matching name may belong to another FL2000 device that
+	 * is disconnecting or re-enumerating concurrently
+	 */
+	if (!client || client->adapter != adapter)
 		return 0;
 
 	/* Check this is a supported DRM bridge */
@@ -62,25 +66,39 @@ static int fl2000_compare(struct device *dev, void *data)
 static struct fl2000_devs *fl2000_get_devices(struct usb_device *usb_dev)
 {
 	struct fl2000_devs *devs;
+	struct i2c_client *client;
 
 	devs = devm_kzalloc(&usb_dev->dev, sizeof(*devs), GFP_KERNEL);
 	if (!devs)
 		return (ERR_PTR(-ENOMEM));
 
 	devs->regmap = fl2000_regmap_init(usb_dev);
-	if (IS_ERR(devs->regmap))
+	if (IS_ERR(devs->regmap)) {
+		dev_err(&usb_dev->dev, "Cannot initialize regmap (%ld)", PTR_ERR(devs->regmap));
 		return ERR_CAST(devs->regmap);
+	}
 
 	devs->adapter = fl2000_i2c_init(usb_dev);
-	if (IS_ERR(devs->adapter))
+	if (IS_ERR(devs->adapter)) {
+		dev_err(&usb_dev->dev, "Cannot initialize I2C adapter (%ld)",
+			PTR_ERR(devs->adapter));
 		return ERR_CAST(devs->adapter);
+	}
 
-	component_match_add(&devs->adapter->dev, &devs->match, fl2000_compare, NULL);
+	component_match_add(&devs->adapter->dev, &devs->match, fl2000_compare, devs->adapter);
+
+	/* Publish state before the fallible bridge probe so a retry from the
+	 * next interface probe does not create duplicate regmap/adapter
+	 */
+	dev_set_drvdata(&usb_dev->dev, devs);
 
 	/* Probe IT66121 HDMI bridge on the newly created I2C bus */
-	it66121_create(devs->adapter);
-
-	dev_set_drvdata(&usb_dev->dev, devs);
+	client = it66121_create(devs->adapter);
+	if (IS_ERR(client)) {
+		dev_err(&usb_dev->dev, "Cannot create HDMI bridge (%ld)", PTR_ERR(client));
+		return ERR_CAST(client);
+	}
+	devs->bridge_client = client;
 
 	return devs;
 }
@@ -102,11 +120,15 @@ static int fl2000_probe(struct usb_interface *interface, const struct usb_device
 
 	if (!devs) {
 		devs = fl2000_get_devices(usb_dev);
-		if (IS_ERR(devs)) {
-			dev_err(&usb_dev->dev, "Cannot initialize I2C and regmap!");
-			return -ENODEV;
-		}
+		if (IS_ERR(devs))
+			return PTR_ERR(devs);
 	}
+
+	/* Bridge detection failed on an earlier interface probe: fail the
+	 * remaining interfaces too so the device is left cleanly unclaimed
+	 */
+	if (!devs->bridge_client)
+		return -ENODEV;
 
 	switch (iface_num) {
 	case FL2000_USBIF_AVCONTROL:
@@ -151,7 +173,8 @@ static void fl2000_disconnect(struct usb_interface *interface)
 		 * component mutex, and that mutex is held across the master
 		 * unbind callback - calling it from there self-deadlocks
 		 */
-		it66121_destroy();
+		it66121_destroy(devs->bridge_client);
+		devs->bridge_client = NULL;
 	}
 
 	switch (iface_num) {
@@ -169,8 +192,10 @@ static void fl2000_disconnect(struct usb_interface *interface)
 	/* Covers disconnect before all interfaces were probed (master never
 	 * bound); no-op if IT66121 was already destroyed above
 	 */
-	if (!devs->active_if)
-		it66121_destroy();
+	if (!devs->active_if) {
+		it66121_destroy(devs->bridge_client);
+		devs->bridge_client = NULL;
+	}
 }
 
 static int fl2000_suspend(struct usb_interface *interface, pm_message_t message)

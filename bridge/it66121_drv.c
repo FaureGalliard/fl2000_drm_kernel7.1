@@ -44,8 +44,6 @@ struct it66121_priv {
 	bool dvi_mode;
 };
 
-static struct it66121_priv *ctx;
-
 static const struct regmap_range_cfg it66121_regmap_banks[] = {
 	/* Do not put common registers to any range, this will lead to skipping "bank" configuration
 	 * when accessing those at addresses 0x00-0x2F
@@ -491,7 +489,13 @@ static int it66121_bridge_attach(struct drm_bridge *bridge, struct drm_encoder *
 
 static void it66121_bridge_detach(struct drm_bridge *bridge)
 {
-	/* TODO: Detach encoder */
+	struct it66121_priv *priv = container_of(bridge, struct it66121_priv, bridge);
+
+	/* Stop the HPD polling work started by attach so it cannot notify a
+	 * bridge that is no longer attached to a DRM device
+	 */
+	cancel_delayed_work_sync(&priv->work);
+
 	dev_info(bridge->dev->dev, "it66121_bridge_detach");
 }
 
@@ -743,12 +747,16 @@ static struct i2c_client *it66121_i2c_init(struct i2c_adapter *adapter)
 	return i2c_new_scanned_device(adapter, &board_info, it66121_addr, it66121_i2c_probe);
 }
 
-void it66121_destroy(void)
+void it66121_destroy(struct i2c_client *client)
 {
-	struct it66121_priv *priv = ctx;
+	struct drm_bridge *bridge;
+	struct it66121_priv *priv;
 
-	if (!priv)
+	if (!client)
 		return;
+
+	bridge = dev_get_drvdata(&client->dev);
+	priv = container_of(bridge, struct it66121_priv, bridge);
 
 	cancel_delayed_work_sync(&priv->work);
 
@@ -765,24 +773,18 @@ void it66121_destroy(void)
 	 * the bridge once DRM releases the remaining references
 	 */
 	i2c_unregister_device(priv->client);
-
-	ctx = NULL;
 }
 
-int it66121_create(struct i2c_adapter *adapter)
+struct i2c_client *it66121_create(struct i2c_adapter *adapter)
 {
 	int ret;
 	struct it66121_priv *priv;
 	struct i2c_client *client;
 
-	/* Only one instance supported */
-	if (ctx)
-		return 0;
-
 	client = it66121_i2c_init(adapter);
 	if (IS_ERR(client)) {
 		pr_err("Cannot find IT66121 I2C client on adapter %s\n", adapter->name);
-		return (int)PTR_ERR(client);
+		return ERR_CAST(client);
 	}
 
 	/* DRM core takes references on the bridge, so it must be allocated with
@@ -794,7 +796,7 @@ int it66121_create(struct i2c_adapter *adapter)
 	if (IS_ERR(priv)) {
 		pr_err("Cannot allocate IT66121 bridge\n");
 		i2c_unregister_device(client);
-		return (int)PTR_ERR(priv);
+		return ERR_CAST(priv);
 	}
 
 	priv->client = client;
@@ -807,16 +809,13 @@ int it66121_create(struct i2c_adapter *adapter)
 
 	drm_bridge_add(&priv->bridge);
 
-	ctx = priv;
-
 	/* Setup work queue for interrupt processing work */
 	priv->work_queue = create_workqueue("it66121_work");
 	if (!priv->work_queue) {
 		pr_err("Create interrupt workqueue failed");
 		drm_bridge_remove(&priv->bridge);
-		i2c_unregister_device(priv->client);
-		ctx = NULL;
-		return -ENOMEM;
+		i2c_unregister_device(client);
+		return ERR_PTR(-ENOMEM);
 	}
 
 	/* Store bridge pointer at I2C client device for further binding */
@@ -828,12 +827,11 @@ int it66121_create(struct i2c_adapter *adapter)
 		pr_err("Cannot register IT66121 component");
 		destroy_workqueue(priv->work_queue);
 		drm_bridge_remove(&priv->bridge);
-		i2c_unregister_device(priv->client);
-		ctx = NULL;
-		return ret;
+		i2c_unregister_device(client);
+		return ERR_PTR(ret);
 	}
 
-	return 0;
+	return client;
 }
 EXPORT_SYMBOL(it66121_create);
 EXPORT_SYMBOL(it66121_destroy);
