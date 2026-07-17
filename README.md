@@ -128,6 +128,25 @@ fl2000_drm/
 
 ## Troubleshooting
 
+### Adapter disconnects ~30 seconds after plugging in
+
+These dongles expose a virtual CD-ROM (mass storage, `/dev/sr0`) with Windows
+drivers alongside the display interfaces. When the display driver initializes
+the chip, the storage function can stop responding; the SCSI layer then times
+out (30 s) and issues a USB reset of the whole device, which unbinds the
+display driver. Tell the kernel to ignore the storage function:
+
+```bash
+# Make usb-storage ignore the FL2000 virtual CD-ROM (takes effect on next plug)
+echo 'options usb-storage quirks=1d5c:2000:i' | sudo tee /etc/modprobe.d/fl2000-storage.conf
+sudo modprobe -r usb_storage 2>/dev/null; sudo modprobe usb_storage
+
+# Or apply immediately without reloading modules:
+echo '1d5c:2000:i' | sudo tee /sys/module/usb_storage/parameters/quirks
+```
+
+The virtual CD only contains Windows/Mac drivers, so nothing is lost.
+
 ### Driver won't load
 
 1. Check kernel headers installed:

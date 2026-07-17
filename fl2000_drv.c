@@ -66,7 +66,6 @@ static int fl2000_compare(struct device *dev, void *data)
 static struct fl2000_devs *fl2000_get_devices(struct usb_device *usb_dev)
 {
 	struct fl2000_devs *devs;
-	struct i2c_client *client;
 
 	devs = devm_kzalloc(&usb_dev->dev, sizeof(*devs), GFP_KERNEL);
 	if (!devs)
@@ -87,18 +86,7 @@ static struct fl2000_devs *fl2000_get_devices(struct usb_device *usb_dev)
 
 	component_match_add(&devs->adapter->dev, &devs->match, fl2000_compare, devs->adapter);
 
-	/* Publish state before the fallible bridge probe so a retry from the
-	 * next interface probe does not create duplicate regmap/adapter
-	 */
 	dev_set_drvdata(&usb_dev->dev, devs);
-
-	/* Probe IT66121 HDMI bridge on the newly created I2C bus */
-	client = it66121_create(devs->adapter);
-	if (IS_ERR(client)) {
-		dev_err(&usb_dev->dev, "Cannot create HDMI bridge (%ld)", PTR_ERR(client));
-		return ERR_CAST(client);
-	}
-	devs->bridge_client = client;
 
 	return devs;
 }
@@ -124,11 +112,24 @@ static int fl2000_probe(struct usb_interface *interface, const struct usb_device
 			return PTR_ERR(devs);
 	}
 
-	/* Bridge detection failed on an earlier interface probe: fail the
-	 * remaining interfaces too so the device is left cleanly unclaimed
+	/* (Re)create the IT66121 bridge if missing. Besides the first interface
+	 * probe, this covers rebind after usb_reset_device() (e.g. triggered by
+	 * SCSI timeouts on the dongle's virtual CD-ROM function): the reset
+	 * unbinds and rebinds all interfaces, destroying the bridge on
+	 * disconnect, but the usb_device and 'devs' survive - without
+	 * re-creation here the driver would never bind again until a physical
+	 * replug
 	 */
-	if (!devs->bridge_client)
-		return -ENODEV;
+	if (!devs->bridge_client) {
+		struct i2c_client *client = it66121_create(devs->adapter);
+
+		if (IS_ERR(client)) {
+			dev_err(&usb_dev->dev, "Cannot create HDMI bridge (%ld)",
+				PTR_ERR(client));
+			return -ENODEV;
+		}
+		devs->bridge_client = client;
+	}
 
 	switch (iface_num) {
 	case FL2000_USBIF_AVCONTROL:
