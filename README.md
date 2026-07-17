@@ -224,6 +224,15 @@ GPL v2 - See [LICENSE](./LICENSE) file for details.
      disconnect
    - Fixed unbind devres pairing so the teardown callback actually runs
 3. **Fixes found during the port**
+   - Restored EDID reading through the IT66121 DDC master (EDID FIFO), now
+     via `drm_edid_read_custom()`. The 6.x modernization had replaced it with
+     `drm_get_edid()` on the FL2000 I2C bus, which cannot work: the monitor's
+     DDC lines are wired to the IT66121, and the FL2000 bus quirks only allow
+     1-byte reads (dmesg showed `adapter quirk: msg too long (addr 0x0050)`),
+     so only fallback modes (1024x768 etc.) were ever offered and desktop
+     compositors ignored the output
+   - `it66121_wait_ddc_ready()` now actually polls the DDC done flag (the
+     poll condition was hardcoded to `true`)
    - EDID reads no longer dereference a NULL I2C adapter
      (`priv->adapter` was never assigned)
    - Interrupt polling work is initialized once at bridge creation, so

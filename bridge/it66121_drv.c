@@ -40,7 +40,7 @@ struct it66121_priv {
 
 	struct hdmi_avi_infoframe hdmi_avi_infoframe;
 
-	struct edid *edid;
+	const struct drm_edid *drm_edid;
 	bool dvi_mode;
 };
 
@@ -188,7 +188,7 @@ static int it66121_wait_ddc_ready(struct it66121_priv *priv)
 	int ret;
 	unsigned int val;
 
-	ret = regmap_field_read_poll_timeout(priv->ddc_done, val, true, EDID_SLEEP, EDID_TIMEOUT);
+	ret = regmap_field_read_poll_timeout(priv->ddc_done, val, val, EDID_SLEEP, EDID_TIMEOUT);
 	if (ret)
 		return ret;
 
@@ -303,8 +303,8 @@ static void it66121_intr_work(struct work_struct *work_item)
 			it66121_is_hpd_detect(priv);
 			event = true;
 			if (priv->conn_status == connector_status_disconnected) {
-				kfree(priv->edid);
-				priv->edid = NULL;
+				drm_edid_free(priv->drm_edid);
+				priv->drm_edid = NULL;
 			}
 		}
 
@@ -317,23 +317,106 @@ static void it66121_intr_work(struct work_struct *work_item)
 	queue_delayed_work(priv->work_queue, &priv->work, msecs_to_jiffies(IRQ_POLL_INTRVL));
 }
 
+/* EDID is read through the IT66121 DDC master (EDID FIFO command): the
+ * monitor's DDC lines are wired to the IT66121, not to the FL2000 I2C bus, and
+ * the FL2000 bus quirks only allow 1-byte reads anyway
+ */
+static int it66121_get_edid_block(void *context, u8 *buf, unsigned int block, size_t len)
+{
+	int ret;
+	size_t remain = len;
+	unsigned int val;
+	unsigned int segment = block >> 1;
+	unsigned int offset = (block & 1) ? 128 : 0;
+	static const u8 header[EDID_LOSS_LEN] = { 0x00, 0xFF, 0xFF };
+	struct it66121_priv *priv = context;
+
+	/* Abort any ongoing DDC operation */
+	ret = it66121_abort_ddc_ops(priv);
+	if (ret)
+		return ret;
+
+	/* Statically fill first 3 bytes (due to EDID reading HW bug they are
+	 * lost, but they are constant in any valid EDID header)
+	 */
+	while (offset < EDID_LOSS_LEN && remain > 0) {
+		*(buf++) = header[offset];
+		remain--;
+		offset++;
+	}
+
+	while (remain > 0) {
+		/* Add bytes that will be lost during EDID read */
+		size_t size = remain + EDID_LOSS_LEN;
+
+		/* ... and check size fits FIFO */
+		size = size > EDID_FIFO_SIZE ? EDID_FIFO_SIZE : size;
+
+		ret = it66121_clear_ddc_fifo(priv);
+		if (ret)
+			return ret;
+
+		ret = regmap_write(priv->regmap, IT66121_DDC_ADDRESS, EDID_DDC_ADDR);
+		if (ret)
+			return ret;
+
+		/* Account 3 bytes that will be lost */
+		ret = regmap_write(priv->regmap, IT66121_DDC_OFFSET, offset - EDID_LOSS_LEN);
+		if (ret)
+			return ret;
+
+		ret = regmap_write(priv->regmap, IT66121_DDC_SIZE, (unsigned int)size);
+		if (ret)
+			return ret;
+
+		ret = regmap_write(priv->regmap, IT66121_DDC_SEGMENT, segment);
+		if (ret)
+			return ret;
+
+		ret = regmap_write(priv->regmap, IT66121_DDC_COMMAND, DDC_CMD_EDID_READ);
+		if (ret)
+			return ret;
+
+		ret = it66121_wait_ddc_ready(priv);
+		if (ret) {
+			it66121_abort_ddc_ops(priv);
+			return ret;
+		}
+
+		/* Deduct lost bytes when reading from FIFO */
+		size -= EDID_LOSS_LEN;
+
+		for (size_t i = 0; i < size; i++) {
+			ret = regmap_read(priv->regmap, IT66121_DDC_RD_FIFO, &val);
+			if (ret)
+				return ret;
+
+			*(buf++) = val & 0xFF;
+		}
+
+		remain -= size;
+		offset += size;
+	}
+
+	return 0;
+}
+
 static int it66121_connector_get_modes(struct drm_connector *connector)
 {
 	struct it66121_priv *priv = container_of(connector, struct it66121_priv, connector);
-	struct edid *edid = priv->edid;
 
-	if (!edid) {
-		edid = drm_get_edid(connector, priv->adapter);
-		if (!edid)
+	if (!priv->drm_edid) {
+		priv->drm_edid = drm_edid_read_custom(connector, it66121_get_edid_block, priv);
+
+		drm_edid_connector_update(connector, priv->drm_edid);
+
+		if (!priv->drm_edid)
 			return 0;
 
-		drm_connector_update_edid_property(connector, edid);
-
-		priv->dvi_mode = !drm_detect_hdmi_monitor(edid);
-		priv->edid = edid;
+		priv->dvi_mode = !connector->display_info.is_hdmi;
 	}
 
-	return drm_add_edid_modes(connector, edid);
+	return drm_edid_connector_add_modes(connector);
 }
 
 static enum drm_mode_status it66121_connector_mode_valid(struct drm_connector *connector,
@@ -764,8 +847,8 @@ void it66121_destroy(struct i2c_client *client)
 
 	component_del(&priv->client->dev, &it66121_component_ops);
 
-	kfree(priv->edid);
-	priv->edid = NULL;
+	drm_edid_free(priv->drm_edid);
+	priv->drm_edid = NULL;
 
 	drm_bridge_remove(&priv->bridge);
 
