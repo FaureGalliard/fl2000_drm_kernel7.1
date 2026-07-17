@@ -143,8 +143,16 @@ static void fl2000_disconnect(struct usb_interface *interface)
 	if (!devs)
 		return;
 
-	if (devs->active_if == FL2000_ALL_IFS)
+	if (devs->active_if == FL2000_ALL_IFS) {
 		component_master_del(&devs->adapter->dev, &fl2000_master_ops);
+
+		/* Destroy IT66121 only after component_master_del() has
+		 * returned: it calls component_del(), which takes the global
+		 * component mutex, and that mutex is held across the master
+		 * unbind callback - calling it from there self-deadlocks
+		 */
+		it66121_destroy();
+	}
 
 	switch (iface_num) {
 	case FL2000_USBIF_AVCONTROL:
@@ -157,6 +165,12 @@ static void fl2000_disconnect(struct usb_interface *interface)
 		dev_warn(&interface->dev, "What interface %d?", iface_num);
 		break;
 	}
+
+	/* Covers disconnect before all interfaces were probed (master never
+	 * bound); no-op if IT66121 was already destroyed above
+	 */
+	if (!devs->active_if)
+		it66121_destroy();
 }
 
 static int fl2000_suspend(struct usb_interface *interface, pm_message_t message)

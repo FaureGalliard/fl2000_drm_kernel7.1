@@ -5,7 +5,6 @@
  */
 
 #include "fl2000.h"
-#include "bridge/it66121.h"
 
 #define DRM_DRIVER_NAME "fl2000_drm"
 #define DRM_DRIVER_DESC "USB-HDMI"
@@ -420,9 +419,12 @@ static void fl2000_drm_if_release(struct device *dev, void *res)
 	drm_dev_unplug(drm);
 	drm_atomic_helper_shutdown(drm);
 
-	/* Detach bridge and destroy IT66121 */
+	/* Detach bridge component. NOTE: this release function runs with the
+	 * global component mutex held (component_master_del() -> master unbind
+	 * -> devres_release()), so it must never call component_del() - that
+	 * would self-deadlock. IT66121 is destroyed later in fl2000_disconnect()
+	 */
 	component_unbind_all(dev, drm);
-	it66121_destroy();
 
 	/* Stop streaming interface */
 	fl2000_stream_destroy(usb_dev);

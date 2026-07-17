@@ -191,6 +191,11 @@ GPL v2 - See [LICENSE](./LICENSE) file for details.
    - Removed manual `kfree()` of the bridge private structure (freed by the
      bridge release once the last reference is dropped)
 2. **Fixed DRM device teardown for hot-unplug**
+   - Fixed kernel deadlock on disconnect: `it66121_destroy()` calls
+     `component_del()`, which takes the global component mutex — but it was
+     invoked from the master unbind callback, which already runs with that
+     mutex held (`component_master_del()` → unbind). It is now called from
+     `fl2000_disconnect()` after `component_master_del()` returns
    - `drm_dev_unplug()` + `drm_atomic_helper_shutdown()` now run on unbind,
      before components are detached (same pattern as in-tree USB display
      drivers such as gm12u320)
