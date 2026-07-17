@@ -27,6 +27,9 @@ struct it66121_priv {
 	struct delayed_work work;
 	struct workqueue_struct *work_queue;
 
+	/* Serializes DDC engine users: EDID reads vs. interrupt work recovery */
+	struct mutex ddc_lock;
+
 	struct regmap_field *irq_pending;
 	struct regmap_field *hpd;
 	struct regmap_field *ddc_done;
@@ -189,14 +192,21 @@ static int it66121_wait_ddc_ready(struct it66121_priv *priv)
 	unsigned int val;
 
 	ret = regmap_field_read_poll_timeout(priv->ddc_done, val, val, EDID_SLEEP, EDID_TIMEOUT);
-	if (ret)
+	if (ret) {
+		unsigned int status = 0;
+
+		regmap_read(priv->regmap, IT66121_DDC_STATUS, &status);
+		dev_err(&priv->client->dev, "DDC not ready (%d), status 0x%02X", ret, status);
 		return ret;
+	}
 
 	ret = regmap_field_read(priv->ddc_error, &val);
 	if (ret)
 		return ret;
-	if (val)
+	if (val) {
+		dev_err(&priv->client->dev, "DDC error, error bits 0x%X", val);
 		return -EIO;
+	}
 
 	return 0;
 }
@@ -293,22 +303,31 @@ static void it66121_intr_work(struct work_struct *work_item)
 
 		regmap_field_write(priv->clr_irq, 1);
 
-		/* XXX: lock */
+		if (status_1.ddc_fifo_err || status_1.ddc_bus_hang || status_1.ddc_noack) {
+			dev_dbg(dev, "DDC recovery: fifo_err=%u bus_hang=%u noack=%u",
+				status_1.ddc_fifo_err, status_1.ddc_bus_hang,
+				status_1.ddc_noack);
 
-		if (status_1.ddc_fifo_err)
-			it66121_clear_ddc_fifo(priv);
-		if (status_1.ddc_bus_hang || status_1.ddc_noack)
-			it66121_abort_ddc_ops(priv);
+			mutex_lock(&priv->ddc_lock);
+			if (status_1.ddc_fifo_err)
+				it66121_clear_ddc_fifo(priv);
+			if (status_1.ddc_bus_hang || status_1.ddc_noack)
+				it66121_abort_ddc_ops(priv);
+			mutex_unlock(&priv->ddc_lock);
+		}
+
 		if (status_1.hpd_plug) {
 			it66121_is_hpd_detect(priv);
 			event = true;
+			dev_info(dev, "Monitor HPD: %s",
+				 priv->conn_status == connector_status_connected ? "connected" :
+				 priv->conn_status == connector_status_disconnected ?
+					 "disconnected" : "unknown");
 			if (priv->conn_status == connector_status_disconnected) {
 				drm_edid_free(priv->drm_edid);
 				priv->drm_edid = NULL;
 			}
 		}
-
-		/* XXX: unlock */
 	}
 
 	if (event)
@@ -321,7 +340,8 @@ static void it66121_intr_work(struct work_struct *work_item)
  * monitor's DDC lines are wired to the IT66121, not to the FL2000 I2C bus, and
  * the FL2000 bus quirks only allow 1-byte reads anyway
  */
-static int it66121_get_edid_block(void *context, u8 *buf, unsigned int block, size_t len)
+static int it66121_do_get_edid_block(struct it66121_priv *priv, u8 *buf, unsigned int block,
+				     size_t len)
 {
 	int ret;
 	size_t remain = len;
@@ -329,7 +349,6 @@ static int it66121_get_edid_block(void *context, u8 *buf, unsigned int block, si
 	unsigned int segment = block >> 1;
 	unsigned int offset = (block & 1) ? 128 : 0;
 	static const u8 header[EDID_LOSS_LEN] = { 0x00, 0xFF, 0xFF };
-	struct it66121_priv *priv = context;
 
 	/* Abort any ongoing DDC operation */
 	ret = it66121_abort_ddc_ops(priv);
@@ -401,6 +420,21 @@ static int it66121_get_edid_block(void *context, u8 *buf, unsigned int block, si
 	return 0;
 }
 
+static int it66121_get_edid_block(void *context, u8 *buf, unsigned int block, size_t len)
+{
+	struct it66121_priv *priv = context;
+	int ret;
+
+	mutex_lock(&priv->ddc_lock);
+	ret = it66121_do_get_edid_block(priv, buf, block, len);
+	mutex_unlock(&priv->ddc_lock);
+
+	if (ret)
+		dev_err(&priv->client->dev, "EDID block %u read failed (%d)", block, ret);
+
+	return ret;
+}
+
 static int it66121_connector_get_modes(struct drm_connector *connector)
 {
 	struct it66121_priv *priv = container_of(connector, struct it66121_priv, connector);
@@ -410,9 +444,13 @@ static int it66121_connector_get_modes(struct drm_connector *connector)
 
 		drm_edid_connector_update(connector, priv->drm_edid);
 
-		if (!priv->drm_edid)
+		if (!priv->drm_edid) {
+			dev_warn(&priv->client->dev, "EDID read failed, using fallback modes");
 			return 0;
+		}
 
+		dev_info(&priv->client->dev, "EDID read ok, monitor is %s",
+			 connector->display_info.is_hdmi ? "HDMI" : "DVI");
 		priv->dvi_mode = !connector->display_info.is_hdmi;
 	}
 
@@ -889,6 +927,7 @@ struct i2c_client *it66121_create(struct i2c_adapter *adapter)
 
 	priv->conn_status = connector_status_unknown;
 	INIT_DELAYED_WORK(&priv->work, &it66121_intr_work);
+	mutex_init(&priv->ddc_lock);
 
 	drm_bridge_add(&priv->bridge);
 

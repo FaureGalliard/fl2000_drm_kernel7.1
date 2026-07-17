@@ -1,0 +1,53 @@
+[gabriel@archlinux ~]$ cd ~/driver/fl2000_drm_kernel7.1 
+[gabriel@archlinux fl2000_drm_kernel7.1]$ git pull 
+remote: Enumerating objects: 12, done.
+remote: Counting objects: 100% (12/12), done.
+remote: Compressing objects: 100% (5/5), done.
+remote: Total 8 (delta 3), reused 8 (delta 3), pack-reused 0 (from 0)
+Unpacking objects: 100% (8/8), 774.95 KiB | 1.01 MiB/s, done.
+From https://github.com/FaureGalliard/fl2000_drm_kernel7.1
+   e5a9f50..ccefca5  main       -> origin/main
+Updating e5a9f50..ccefca5
+Fast-forward
+ README.md                     |      9 +
+ bridge/it66121_drv.c          |    113 +-
+ docs/archlinux_fl2000_log.txt |    314 +
+ docs/fl2000-test.log          | 307495 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 307916 insertions(+), 15 deletions(-)
+ create mode 100644 docs/archlinux_fl2000_log.txt
+ create mode 100644 docs/fl2000-test.log
+[gabriel@archlinux fl2000_drm_kernel7.1]$ make clean && make 
+make -C /lib/modules/7.1.3-arch1-3/build M=/home/gabriel/driver/fl2000_drm_kernel7.1 clean
+make[1]: Entering directory '/usr/lib/modules/7.1.3-arch1-3/build'
+make[2]: Entering directory '/home/gabriel/driver/fl2000_drm_kernel7.1'
+  CLEAN   Module.symvers
+make[2]: Leaving directory '/home/gabriel/driver/fl2000_drm_kernel7.1'
+make[1]: Leaving directory '/usr/lib/modules/7.1.3-arch1-3/build'
+rm -f /home/gabriel/driver/fl2000_drm_kernel7.1/Module.symvers /home/gabriel/driver/fl2000_drm_kernel7.1/*.ur-safe
+make CHECK="/usr/bin/sparse" -C /lib/modules/7.1.3-arch1-3/build M=/home/gabriel/driver/fl2000_drm_kernel7.1 modules
+make[1]: Entering directory '/usr/lib/modules/7.1.3-arch1-3/build'
+make[2]: Entering directory '/home/gabriel/driver/fl2000_drm_kernel7.1'
+  CC [M]  fl2000_drv.o
+  CC [M]  fl2000_registers.o
+  CC [M]  fl2000_interrupt.o
+  CC [M]  fl2000_streaming.o
+  CC [M]  fl2000_i2c.o
+  CC [M]  fl2000_drm.o
+  CC [M]  bridge/it66121_drv.o
+  LD [M]  fl2000.o
+  MODPOST Module.symvers
+  CC [M]  fl2000.mod.o
+  CC [M]  .module-common.o
+  LD [M]  fl2000.ko
+  BTF [M] fl2000.ko
+make[2]: Leaving directory '/home/gabriel/driver/fl2000_drm_kernel7.1'
+make[1]: Leaving directory '/usr/lib/modules/7.1.3-arch1-3/build'
+[gabriel@archlinux fl2000_drm_kernel7.1]$ sudo cp fl2000.ko /lib/modules/$(uname -r)/extra/ && sudo depmod -a 
+[sudo] password for gabriel: 
+[gabriel@archlinux fl2000_drm_kernel7.1]$ echo 'options usb-storage quirks=1d5c:2000:i' | sudo tee /etc/modprobe.d/fl2000-storage.conf 
+options usb-storage quirks=1d5c:2000:i
+[gabriel@archlinux fl2000_drm_kernel7.1]$  sudo rmmod fl2000 2>/dev/null
+
+sudo modprobe fl2000 
+^C^C
+

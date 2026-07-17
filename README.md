@@ -233,6 +233,12 @@ GPL v2 - See [LICENSE](./LICENSE) file for details.
      compositors ignored the output
    - `it66121_wait_ddc_ready()` now actually polls the DDC done flag (the
      poll condition was hardcoded to `true`)
+   - DDC engine access is serialized with a mutex: the interrupt polling work
+     could issue a DDC abort in the middle of an ongoing EDID read (the
+     original driver's `XXX: lock` placeholders, now implemented)
+   - EDID/DDC failures are logged with the failing step and raw DDC status,
+     and HPD state changes are logged, so field debugging no longer needs
+     dynamic debug flags
    - EDID reads no longer dereference a NULL I2C adapter
      (`priv->adapter` was never assigned)
    - Interrupt polling work is initialized once at bridge creation, so

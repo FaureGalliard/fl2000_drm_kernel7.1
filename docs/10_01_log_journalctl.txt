@@ -1,0 +1,103 @@
+[gabriel@archlinux ~]$ journalctl -k -b -1 | tail -n 100
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_CREATE
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_FD_TO_HANDLE
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_DESTROY
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="gnome-shell" pid=2012, dev=0xe201, auth=1, DRM_IOCTL_SYNCOBJ_DESTROY
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_DESTROY
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_WAIT
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_RESET
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="gnome-shell" pid=2012, dev=0xe201, auth=1, DRM_IOCTL_SYNCOBJ_CREATE
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="gnome-shel:cs0" pid=2042, dev=0xe201, auth=1, AMDGPU_CS
+Jul 17 09:22:37 archlinux kernel: [drm:sdma_v4_0_ring_set_wptr [amdgpu]] Using doorbell -- wptr_offs == 0x00000198 lower_32_bits(ring->wptr << 2) == 0x00691c00 upper_32_bits(ring->wptr << 2) == 0x00000000
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="gnome-shell" pid=2012, dev=0xe201, auth=1, DRM_IOCTL_SYNCOBJ_HANDLE_TO_FD
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="gnome-shell" pid=2012, dev=0xe201, auth=1, DRM_IOCTL_MODE_ADDFB2
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_mode_addfb2] [FB:114]
+Jul 17 09:22:37 archlinux kernel: [drm:gfx_v9_0_eop_irq [amdgpu]] IH: CP EOP
+Jul 17 09:22:37 archlinux kernel: [drm:sdma_v4_0_ring_set_wptr [amdgpu]] calling WDOORBELL64(0x000001e0, 0x0000000000691c00)
+Jul 17 09:22:37 archlinux kernel: [drm:gfx_v9_0_eop_irq [amdgpu]] IH: CP EOP
+Jul 17 09:22:37 archlinux kernel: [drm:sdma_v4_0_process_trap_irq [amdgpu]] IH: SDMA trap
+Jul 17 09:22:37 archlinux kernel: [drm:sdma_v4_0_process_trap_irq [amdgpu]] IH: SDMA trap
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_TIMELINE_WAIT
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, AMDGPU_CS
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_DESTROY
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_WAIT
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_RESET
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_TIMELINE_WAIT
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_TRANSFER
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_TRANSFER
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_TRANSFER
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_RESET
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="gnome-shell" pid=2012, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_EVENTFD
+Jul 17 09:22:37 archlinux kernel: [drm:gfx_v9_0_eop_irq [amdgpu]] IH: CP EOP
+Jul 17 09:22:37 archlinux kernel: [drm:gfx_v9_0_eop_irq [amdgpu]] IH: CP EOP
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_WAIT
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_WAIT
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_RESET
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_QUERY
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_TIMELINE_WAIT
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx", pid=4511, ret=-62
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_CREATE
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_TRANSFER
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_HANDLE_TO_FD
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_CREATE
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_TRANSFER
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_HANDLE_TO_FD
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_CREATE
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_FD_TO_HANDLE
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_DESTROY
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_DESTROY
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_WAIT
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="gnome-shell" pid=2012, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_CREATE
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="gnome-shell" pid=2012, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_FD_TO_HANDLE
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="gnome-shell" pid=2012, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_TRANSFER
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="gnome-shell" pid=2012, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_DESTROY
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_RESET
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_TIMELINE_WAIT
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, AMDGPU_CS
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_DESTROY
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_WAIT
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_RESET
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_TIMELINE_WAIT
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_TRANSFER
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_TRANSFER
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_TRANSFER
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="kgx" pid=4511, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_RESET
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="gnome-shell" pid=2012, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_EVENTFD
+Jul 17 09:22:37 archlinux kernel: [drm:gfx_v9_0_eop_irq [amdgpu]] IH: CP EOP
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="gnome-shell" pid=2012, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_CREATE
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="gnome-shell" pid=2012, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_FD_TO_HANDLE
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="gnome-shell" pid=2012, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_TRANSFER
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="gnome-shell" pid=2012, dev=0xe280, auth=0, DRM_IOCTL_SYNCOBJ_DESTROY
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_ioctl] comm="KMS thread" pid=2040, dev=0xe201, auth=1, DRM_IOCTL_MODE_ATOMIC
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_atomic_state_init] Allocated atomic state 000000007f81485c
+Jul 17 09:22:37 archlinux kernel: [drm:drm_mode_object_get] OBJ ID: 112 (2)
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_atomic_get_plane_state] Added [PLANE:62:plane-3] 00000000f0742c23 state to 000000007f81485c
+Jul 17 09:22:37 archlinux kernel: [drm:drm_mode_object_get] OBJ ID: 126 (1)
+Jul 17 09:22:37 archlinux kernel: [drm:drm_mode_object_get] OBJ ID: 128 (1)
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_atomic_get_crtc_state] Added [CRTC:79:crtc-0] 00000000e272a560 state to 000000007f81485c
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_atomic_set_fb_for_plane] Set [FB:114] for [PLANE:62:plane-3] state 00000000f0742c23
+Jul 17 09:22:37 archlinux kernel: [drm:drm_mode_object_get] OBJ ID: 114 (3)
+Jul 17 09:22:37 archlinux kernel: [drm:drm_mode_object_put.part.0] OBJ ID: 112 (3)
+Jul 17 09:22:37 archlinux kernel: [drm:drm_mode_object_put.part.0] OBJ ID: 114 (4)
+Jul 17 09:22:37 archlinux kernel: [drm:drm_mode_object_put.part.0] OBJ ID: 114 (3)
+Jul 17 09:22:37 archlinux kernel: [drm:drm_mode_object_get] OBJ ID: 115 (2)
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_atomic_get_plane_state] Added [PLANE:76:plane-5] 00000000bb368328 state to 000000007f81485c
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_atomic_set_fb_for_plane] Set [NOFB] for [PLANE:76:plane-5] state 00000000bb368328
+Jul 17 09:22:37 archlinux kernel: [drm:drm_mode_object_put.part.0] OBJ ID: 115 (3)
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_atomic_set_crtc_for_plane] Link [PLANE:76:plane-5] state 00000000bb368328 to [NOCRTC]
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_atomic_check_only] checking 000000007f81485c
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_atomic_normalize_zpos] [CRTC:79:crtc-0] calculating normalized zpos values
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_atomic_normalize_zpos] [PLANE:62:plane-3] processing zpos value 1
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_atomic_normalize_zpos] [PLANE:62:plane-3] normalized zpos value 0
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:drm_atomic_nonblocking_commit] committing 000000007f81485c nonblocking
+Jul 17 09:22:37 archlinux kernel: [drm:amdgpu_dm_plane_helper_prepare_fb [amdgpu]] No FB bound
+Jul 17 09:22:37 archlinux kernel: amdgpu 0000:04:00.0: [drm:amdgpu_dm_atomic_commit_tail [amdgpu]] crtc_id=0 with size 256 to 256
+Jul 17 09:27:22 archlinux kernel: gnome-software[2344]: segfault at 278 ip 00007f68c51cab92 sp 00007ffe1177d9a0 error 4 in libgtk-4.so.1.2200.4[3cab92,7f68c4e89000+57c000] likely on CPU 3 (core 1, socket 0)
+Jul 17 09:27:22 archlinux kernel: Code: 53 48 89 f3 48 83 ec 18 48 8b 05 99 1e 78 00 ff 90 b0 00 00 00 48 89 df 67 e8 9a 23 e2 ff 48 89 c3 48 89 c7 67 e8 be c4 18 00 <48> 83 b8 78 02 00 00 00 74 3c 48 8b bb 98 02 00 00 48 85 ff 74 30
+Jul 17 09:27:22 archlinux kernel: rfkill: input handler enabled
+Jul 17 09:27:23 archlinux kernel: wlan0: deauthenticating from 84:78:48:fe:fa:82 by local choice (Reason: 3=DEAUTH_LEAVING)
+Jul 17 09:27:23 archlinux kernel: zram0: detected capacity change from 8388608 to 0
+Jul 17 09:27:23 archlinux systemd-shutdown[1]: Syncing filesystems and block devices.
+Jul 17 09:27:23 archlinux systemd-shutdown[1]: Sending SIGTERM to remaining processes...
+
+--
