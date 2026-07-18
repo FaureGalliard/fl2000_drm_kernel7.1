@@ -244,10 +244,15 @@ GPL v2 - See [LICENSE](./LICENSE) file for details.
      this sequence as "HDCP is not supported"
    - Made the DDC completion wait tolerate bus contention: on this hardware
      the FL2000 I2C master and the IT66121 DDC master share the physical bus,
-     so `arbitration lose` is a normal transient while our own status polling
-     competes with the DDC transfer (status `0x4A` = active + arbi-lose). The
-     wait now runs until the engine completes or goes idle with an error, and
+     so `wait bus`/`arbitration lose` are live/latched transients of the
+     engine retrying (status `0x4A` = active + arbi-lose, `0x1A` while backing
+     off). The wait now polls only for TX_DONE with a generous timeout, and
      polls sparsely to reduce self-inflicted contention
+   - Added a direct-DDC EDID fallback: on Fresco reference designs the
+     monitor's DDC lines hang directly off the FL2000 I2C bus and the vendor
+     driver reads EDID at address 0x50 with the FL2000's own dword I2C engine.
+     If the IT66121 EDID FIFO path fails, the driver now retries reading the
+     EDID that way, bypassing the IT66121 DDC master
    - EDID/DDC failures are logged with the failing step and raw DDC status,
      and HPD state changes are logged, so field debugging no longer needs
      dynamic debug flags

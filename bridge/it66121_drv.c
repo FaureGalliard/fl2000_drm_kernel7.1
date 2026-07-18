@@ -4,7 +4,10 @@
  * (C) Copyright 2018-2019, Artem Mygaiev
  */
 
+#include <linux/unaligned.h>
+
 #include "it66121.h"
+#include "../fl2000.h"
 
 #define VENDOR_ID      0x4954
 #define DEVICE_ID      0x0612
@@ -199,31 +202,20 @@ static int it66121_wait_ddc_ready(struct it66121_priv *priv)
 	int ret;
 	unsigned int val;
 
-	/* On this hardware the FL2000 I2C master and the IT66121 DDC master
-	 * share the physical bus, so 'wait bus'/'arbitration lose' flags are
-	 * expected transients while our own status polling competes with the
-	 * ongoing DDC transaction (the engine retries by itself). Wait for
-	 * completion while the engine is active; treat error flags as fatal
-	 * only once the engine went idle without completing
+	/* Wait for completion only. On this hardware the FL2000 I2C master and
+	 * the IT66121 DDC master share the physical bus, so 'wait bus' and
+	 * 'arbitration lose' flags are live/latched transients of the engine
+	 * retrying on a contended bus, not terminal errors - the only reliable
+	 * terminal signal is TX_DONE (or the timeout)
 	 */
 	ret = regmap_read_poll_timeout(priv->regmap, IT66121_DDC_STATUS, val,
-				       (val & DDC_STATUS_TX_DONE) ||
-					       (!(val & DDC_STATUS_ACTIVE) &&
-						(val & DDC_STATUS_ERROR_MASK)),
-				       EDID_SLEEP, EDID_TIMEOUT);
+				       val & DDC_STATUS_TX_DONE, EDID_SLEEP, EDID_TIMEOUT);
 	if (ret) {
-		dev_err(&priv->client->dev, "DDC not ready (%d), status 0x%02X", ret, val);
+		dev_err(&priv->client->dev, "DDC not done (%d), status 0x%02X", ret, val);
 		return ret;
 	}
 
-	/* Completion wins: error flags may be stale leftovers of transient
-	 * arbitration losses that the engine already recovered from
-	 */
-	if (val & DDC_STATUS_TX_DONE)
-		return 0;
-
-	dev_err(&priv->client->dev, "DDC failed, status 0x%02X", val);
-	return -EIO;
+	return 0;
 }
 
 static int it66121_clear_ddc_fifo(struct it66121_priv *priv)
@@ -472,12 +464,54 @@ static int it66121_get_edid_block(void *context, u8 *buf, unsigned int block, si
 	return ret;
 }
 
+/* Fallback EDID path: on Fresco reference designs the monitor's DDC lines hang
+ * directly off the FL2000 I2C bus, and the vendor driver reads EDID at address
+ * 0x50 with the FL2000's own dword I2C engine, bypassing the IT66121 DDC
+ * master entirely. The engine reads 4 bytes per operation with an 8-bit
+ * offset, which covers EDID blocks 0 and 1
+ */
+static int it66121_get_edid_block_direct(void *context, u8 *buf, unsigned int block, size_t len)
+{
+	struct it66121_priv *priv = context;
+	struct usb_device *usb_dev = priv->adapter->algo_data;
+	unsigned int start = block * EDID_LENGTH;
+	int ret;
+
+	if (block > 1 || len > EDID_LENGTH)
+		return -EOPNOTSUPP;
+
+	for (unsigned int i = 0; i < len; i += 4) {
+		u32 data;
+
+		ret = fl2000_i2c_dword(usb_dev, true, EDID_DDC_ADDR >> 1, start + i, &data);
+		if (ret) {
+			dev_err(&priv->client->dev,
+				"Direct EDID read failed at offset %u (%d)", start + i, ret);
+			return ret;
+		}
+
+		put_unaligned_le32(data, buf + i);
+	}
+
+	return 0;
+}
+
 static int it66121_connector_get_modes(struct drm_connector *connector)
 {
 	struct it66121_priv *priv = container_of(connector, struct it66121_priv, connector);
 
 	if (!priv->drm_edid) {
 		priv->drm_edid = drm_edid_read_custom(connector, it66121_get_edid_block, priv);
+
+		/* Board wirings differ: try the direct FL2000-bus DDC read if
+		 * the IT66121 EDID FIFO path did not work
+		 */
+		if (!priv->drm_edid) {
+			dev_info(&priv->client->dev,
+				 "EDID FIFO read failed, trying direct DDC read");
+			priv->drm_edid = drm_edid_read_custom(
+				connector, it66121_get_edid_block_direct, priv);
+		}
 
 		drm_edid_connector_update(connector, priv->drm_edid);
 
