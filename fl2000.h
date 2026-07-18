@@ -106,6 +106,9 @@ static inline int fl2000_urb_status(struct usb_device *usb_dev, int status, int 
 	int ret = status;
 
 	switch (status) {
+	/* Success */
+	case 0:
+		break;
 	/* Stalled endpoint */
 	case -EPIPE:
 		ret = usb_clear_halt(usb_dev, pipe);

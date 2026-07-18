@@ -89,8 +89,11 @@ static const struct regmap_config it66121_regmap_config = {
 	.use_single_write = true,
 };
 
-#define EDID_SLEEP   1000
-#define EDID_TIMEOUT 200000
+/* Poll sparsely: every status read is a transaction on the shared bus that
+ * competes with the DDC engine's own transfer
+ */
+#define EDID_SLEEP   5000
+#define EDID_TIMEOUT 500000
 
 #define EDID_HDCP_ADDR 0x74
 #define EDID_DDC_ADDR  0xA0
@@ -186,8 +189,9 @@ static int it66121_configure_afe(struct it66121_priv *priv, int clock_khz)
 	return 0;
 }
 
-/* DDC status bits: done on bit 7; noack/wait bus/arbitration lose on bits 5:3 */
+/* DDC status bits: done (7), active (6), noack/wait bus/arbitration lose (5:3) */
 #define DDC_STATUS_TX_DONE    BIT(7)
+#define DDC_STATUS_ACTIVE     BIT(6)
 #define DDC_STATUS_ERROR_MASK GENMASK(5, 3)
 
 static int it66121_wait_ddc_ready(struct it66121_priv *priv)
@@ -195,21 +199,31 @@ static int it66121_wait_ddc_ready(struct it66121_priv *priv)
 	int ret;
 	unsigned int val;
 
-	/* Exit early both on completion and on error conditions */
+	/* On this hardware the FL2000 I2C master and the IT66121 DDC master
+	 * share the physical bus, so 'wait bus'/'arbitration lose' flags are
+	 * expected transients while our own status polling competes with the
+	 * ongoing DDC transaction (the engine retries by itself). Wait for
+	 * completion while the engine is active; treat error flags as fatal
+	 * only once the engine went idle without completing
+	 */
 	ret = regmap_read_poll_timeout(priv->regmap, IT66121_DDC_STATUS, val,
-				       val & (DDC_STATUS_TX_DONE | DDC_STATUS_ERROR_MASK),
+				       (val & DDC_STATUS_TX_DONE) ||
+					       (!(val & DDC_STATUS_ACTIVE) &&
+						(val & DDC_STATUS_ERROR_MASK)),
 				       EDID_SLEEP, EDID_TIMEOUT);
 	if (ret) {
 		dev_err(&priv->client->dev, "DDC not ready (%d), status 0x%02X", ret, val);
 		return ret;
 	}
 
-	if (val & DDC_STATUS_ERROR_MASK) {
-		dev_err(&priv->client->dev, "DDC error, status 0x%02X", val);
-		return -EIO;
-	}
+	/* Completion wins: error flags may be stale leftovers of transient
+	 * arbitration losses that the engine already recovered from
+	 */
+	if (val & DDC_STATUS_TX_DONE)
+		return 0;
 
-	return 0;
+	dev_err(&priv->client->dev, "DDC failed, status 0x%02X", val);
+	return -EIO;
 }
 
 static int it66121_clear_ddc_fifo(struct it66121_priv *priv)

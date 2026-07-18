@@ -242,6 +242,12 @@ GPL v2 - See [LICENSE](./LICENSE) file for details.
      bus after reset — DDC status reported `wait bus` + `arbitration lose`
      (0x1A) and every EDID read timed out. The original driver had removed
      this sequence as "HDCP is not supported"
+   - Made the DDC completion wait tolerate bus contention: on this hardware
+     the FL2000 I2C master and the IT66121 DDC master share the physical bus,
+     so `arbitration lose` is a normal transient while our own status polling
+     competes with the DDC transfer (status `0x4A` = active + arbi-lose). The
+     wait now runs until the engine completes or goes idle with an error, and
+     polls sparsely to reduce self-inflicted contention
    - EDID/DDC failures are logged with the failing step and raw DDC status,
      and HPD state changes are logged, so field debugging no longer needs
      dynamic debug flags
