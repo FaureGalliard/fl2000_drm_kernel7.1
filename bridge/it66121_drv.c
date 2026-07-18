@@ -186,25 +186,26 @@ static int it66121_configure_afe(struct it66121_priv *priv, int clock_khz)
 	return 0;
 }
 
+/* DDC status bits: done on bit 7; noack/wait bus/arbitration lose on bits 5:3 */
+#define DDC_STATUS_TX_DONE    BIT(7)
+#define DDC_STATUS_ERROR_MASK GENMASK(5, 3)
+
 static int it66121_wait_ddc_ready(struct it66121_priv *priv)
 {
 	int ret;
 	unsigned int val;
 
-	ret = regmap_field_read_poll_timeout(priv->ddc_done, val, val, EDID_SLEEP, EDID_TIMEOUT);
+	/* Exit early both on completion and on error conditions */
+	ret = regmap_read_poll_timeout(priv->regmap, IT66121_DDC_STATUS, val,
+				       val & (DDC_STATUS_TX_DONE | DDC_STATUS_ERROR_MASK),
+				       EDID_SLEEP, EDID_TIMEOUT);
 	if (ret) {
-		unsigned int status = 0;
-
-		regmap_read(priv->regmap, IT66121_DDC_STATUS, &status);
-		dev_err(&priv->client->dev, "DDC not ready (%d), status 0x%02X", ret, status);
+		dev_err(&priv->client->dev, "DDC not ready (%d), status 0x%02X", ret, val);
 		return ret;
 	}
 
-	ret = regmap_field_read(priv->ddc_error, &val);
-	if (ret)
-		return ret;
-	if (val) {
-		dev_err(&priv->client->dev, "DDC error, error bits 0x%X", val);
+	if (val & DDC_STATUS_ERROR_MASK) {
+		dev_err(&priv->client->dev, "DDC error, status 0x%02X", val);
 		return -EIO;
 	}
 
@@ -225,13 +226,35 @@ static int it66121_clear_ddc_fifo(struct it66121_priv *priv)
 static int it66121_abort_ddc_ops(struct it66121_priv *priv)
 {
 	int ret;
+	unsigned int swreset, cpdesire;
 
-	/* Prior to DDC abort command there was also a reset of HDCP:
-	 *  1. HDCP_DESIRE clear bit CP DESIRE
-	 *  2. SW_RST set bit HDCP_RST
-	 * it seems wrong to keep them reset, i.e. without restoring initial state, but somehow this
-	 * is how it was implemented. This sequence is removed since HDCP is not supported
+	/* The HDCP engine shares the DDC master and holds the bus after chip
+	 * reset (DDC status reports 'wait bus' + 'arbitration lose', 0x1A).
+	 * Follow the ITE reference sequence, as the in-tree ite-it66121 driver
+	 * does: clear HDCP CP_DESIRE, reset the HDCP engine and re-select the
+	 * host as DDC master before issuing the abort command
 	 */
+	ret = regmap_read(priv->regmap, IT66121_SW_RST, &swreset);
+	if (ret)
+		return ret;
+
+	ret = regmap_read(priv->regmap, IT66121_HDCP_CONTROL, &cpdesire);
+	if (ret)
+		return ret;
+
+	ret = regmap_write(priv->regmap, IT66121_HDCP_CONTROL,
+			   cpdesire & ~IT66121_HDCP_CP_DESIRE);
+	if (ret)
+		return ret;
+
+	ret = regmap_write(priv->regmap, IT66121_SW_RST, swreset | IT66121_SW_HDCP_RST);
+	if (ret)
+		return ret;
+
+	ret = regmap_write(priv->regmap, IT66121_DDC_CONTROL,
+			   IT66121_DDC_MASTER_DDC | IT66121_DDC_MASTER_HOST);
+	if (ret)
+		return ret;
 
 	/* From original driver: According to 2009/01/15 modification by Jau-Chih.Tseng@ite.com.tw
 	 * do abort DDC twice

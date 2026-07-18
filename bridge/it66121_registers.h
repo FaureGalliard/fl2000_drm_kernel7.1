@@ -86,6 +86,9 @@ static const struct reg_field IT66121_DDC_STATUS_ddc_error = REG_FIELD(IT66121_D
 #define IT66121_DDC_RD_FIFO 0x17
 /* reserved */
 #define IT66121_HDCP_ADDRESS 0x19
+
+#define IT66121_HDCP_CONTROL   0x20
+#define IT66121_HDCP_CP_DESIRE BIT(0)
 /* reserved */
 #define IT66121_DDC_BUS_HOLD_TIME 0x1B
 #define IT66121_ROM_STATUS	  0x1C

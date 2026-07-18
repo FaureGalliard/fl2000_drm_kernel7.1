@@ -236,6 +236,12 @@ GPL v2 - See [LICENSE](./LICENSE) file for details.
    - DDC engine access is serialized with a mutex: the interrupt polling work
      could issue a DDC abort in the middle of an ongoing EDID read (the
      original driver's `XXX: lock` placeholders, now implemented)
+   - Restored the HDCP release sequence in the DDC abort path (clear
+     CP_DESIRE + HDCP engine reset + host master re-select, as in the in-tree
+     ite-it66121 driver). The HDCP engine shares the DDC master and held the
+     bus after reset — DDC status reported `wait bus` + `arbitration lose`
+     (0x1A) and every EDID read timed out. The original driver had removed
+     this sequence as "HDCP is not supported"
    - EDID/DDC failures are logged with the failing step and raw DDC status,
      and HPD state changes are logged, so field debugging no longer needs
      dynamic debug flags
