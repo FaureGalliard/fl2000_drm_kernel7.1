@@ -54,20 +54,30 @@ if ! lsusb -d 1d5c:2000; then
 	echo ">>> CONECTA EL ADAPTADOR AHORA (con el monitor encendido) <<<"
 fi
 
-step "esperando tarjeta DRM del fl2000 (max 60s)"
+step "esperando tarjeta DRM del fl2000 (max 90s)"
 FOUND=0
-for i in $(seq 1 30); do
+for i in $(seq 1 45); do
 	if modetest -M fl2000_drm -c >/dev/null 2>&1; then
 		FOUND=1
 		echo "tarjeta DRM presente (tras $((i * 2))s)"
 		break
 	fi
+	if [ "$i" = 15 ] && ! lsusb -d 1d5c:2000 >/dev/null; then
+		echo ">>> El adaptador NO esta en el bus USB. Si lo reconectaste hace"
+		echo ">>> poco, la parte USB 3.0 puede no haber enumerado: dejalo"
+		echo ">>> DESCONECTADO 10 segundos y enchufalo firme otra vez <<<"
+	fi
 	sleep 2
 done
 if [ "$FOUND" = 0 ]; then
 	echo "ERROR: la tarjeta DRM del fl2000 nunca aparecio."
-	echo "Si el adaptador estaba conectado desde el arranque: desconectalo,"
-	echo "espera 5s, reconectalo y vuelve a correr este script."
+	if lsusb -d 1d5c:2000 >/dev/null; then
+		echo "El adaptador SI esta en USB: el probe fallo, revisar dmesg abajo."
+	else
+		echo "El adaptador no esta en el bus USB (fallo de enumeracion USB3):"
+		echo "dejalo desconectado 10s, reconectalo firme y repite el script."
+		echo "Lo mas fiable: arrancar Linux con el adaptador ya conectado."
+	fi
 fi
 
 step "estado /sys/class/drm"
