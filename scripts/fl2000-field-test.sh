@@ -92,13 +92,16 @@ done
 
 if [ "$FOUND" = 1 ]; then
 	CONN=$(modetest -M fl2000_drm -c 2>/dev/null | awk '/\<connected\>/{print $1; exit}')
-	if [ -n "${CONN:-}" ]; then
-		step "PRUEBA DE MODESET: patron de colores 15s en conector $CONN"
+	# Primer modo de la lista (el preferido del monitor), sin fijar refresh:
+	# p.ej. el LG lista 1920x1080@59.94 y "1920x1080-60" no haria match
+	MODE=$(modetest -M fl2000_drm -c 2>/dev/null | awk '/#0 /{print $2; exit}')
+	if [ -n "${CONN:-}" ] && [ -n "${MODE:-}" ]; then
+		step "PRUEBA DE MODESET: patron de colores 15s en conector $CONN modo $MODE"
 		echo ">>> MIRA EL MONITOR LG AHORA - deberian verse barras de colores <<<"
-		sleep 12 | modetest -M fl2000_drm -s "$CONN:1920x1080-60" 2>&1
+		sleep 12 | modetest -M fl2000_drm -s "$CONN:$MODE" 2>&1
 		echo "(anota si se vio el patron y compartelo junto con este log)"
 	else
-		step "PRUEBA DE MODESET omitida: no hay conector en estado connected"
+		step "PRUEBA DE MODESET omitida: sin conector conectado o sin modos"
 	fi
 fi
 
