@@ -24,7 +24,23 @@ echo "kernel: $(uname -r)"
 
 step "quirk usb-storage (debe contener 1d5c:2000:i)"
 modprobe usb_storage 2>/dev/null
+# El archivo modprobe.d no aplica si usb_storage se cargo desde un initramfs
+# viejo (correr 'sudo mkinitcpio -P' una vez lo arregla permanente).
+# Aplicar en caliente por si acaso:
+echo '1d5c:2000:i' > /sys/module/usb_storage/parameters/quirks 2>/dev/null
 cat /sys/module/usb_storage/parameters/quirks 2>/dev/null || echo "usb_storage no cargado"
+
+# Si usb-storage ya esta unido al CD virtual del FL2000 (conectado desde el
+# arranque), soltarlo para que no dispare resets SCSI a los 30s
+for intf in /sys/bus/usb/drivers/usb-storage/[0-9]*; do
+	[ -e "$intf" ] || continue
+	vid=$(cat "$intf/../idVendor" 2>/dev/null)
+	pid=$(cat "$intf/../idProduct" 2>/dev/null)
+	if [ "$vid" = "1d5c" ] && [ "$pid" = "2000" ]; then
+		basename "$intf" > /sys/bus/usb/drivers/usb-storage/unbind
+		echo "usb-storage desatado de la interfaz $(basename "$intf") del FL2000"
+	fi
+done
 
 step "modulo fl2000"
 if ! lsmod | grep -q '^fl2000'; then

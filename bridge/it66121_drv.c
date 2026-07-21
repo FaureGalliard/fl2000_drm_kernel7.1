@@ -282,7 +282,8 @@ static void it66121_is_hpd_detect(struct it66121_priv *priv)
 {
 	int ret;
 	unsigned int val;
-	struct device *dev = priv->bridge.dev->dev;
+	/* Do not use bridge.dev here: it is NULL while the bridge is detached */
+	struct device *dev = &priv->client->dev;
 
 	ret = regmap_field_read(priv->hpd, &val);
 	if (ret) {
@@ -301,7 +302,8 @@ static void it66121_intr_work(struct work_struct *work_item)
 	unsigned int val;
 	struct delayed_work *dwork = container_of(work_item, struct delayed_work, work);
 	struct it66121_priv *priv = container_of(dwork, struct it66121_priv, work);
-	struct device *dev = priv->bridge.dev->dev;
+	/* Do not use bridge.dev here: it is NULL while the bridge is detached */
+	struct device *dev = &priv->client->dev;
 	bool event = false;
 
 	ret = regmap_field_read(priv->irq_pending, &val);

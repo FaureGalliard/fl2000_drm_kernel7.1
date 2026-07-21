@@ -128,6 +128,20 @@ fl2000_drm/
 
 ## Troubleshooting
 
+### The usb-storage quirk shows empty after reboot
+
+`usb_storage` is loaded from the initramfs during early boot, and the
+initramfs bundles its own copy of `/etc/modprobe.d`. If the initramfs was
+generated before creating `fl2000-storage.conf`, the quirk silently does not
+apply. Regenerate it once:
+
+```bash
+sudo mkinitcpio -P
+```
+
+`scripts/fl2000-field-test.sh` also force-applies the quirk at runtime and
+unbinds usb-storage from the FL2000's virtual CD if it already claimed it.
+
 ### Adapter disconnects ~30 seconds after plugging in
 
 These dongles expose a virtual CD-ROM (mass storage, `/dev/sr0`) with Windows
@@ -209,7 +223,19 @@ GPL v2 - See [LICENSE](./LICENSE) file for details.
      `kzalloc()`; its lifetime is managed by the DRM core reference counting
    - Removed manual `kfree()` of the bridge private structure (freed by the
      bridge release once the last reference is dropped)
-2. **Fixed DRM device teardown for hot-unplug**
+2. **Fixed kernel Oops on rebind after USB reset**
+   - The IT66121 component was destroyed and re-created on every
+     unbind/rebind cycle, which leaves dangling component pointers in the
+     aggregate match data (`free_aggregate_device()` clears `c->adev` but not
+     `match->compare[i].component`, and `component_del()` on an unbound
+     component skips `remove_component()`), crashing in
+     `component_bind_all()` on the next bind. The component now persists for
+     the lifetime of the USB device (created once, with retry on cold-boot
+     detection failures; destroyed via devres when the device is unplugged)
+   - The IT66121 polling work and log messages no longer dereference
+     `bridge->dev`, which is NULL while the bridge is detached between bind
+     cycles
+3. **Fixed DRM device teardown for hot-unplug**
    - Fixed kernel deadlock on disconnect: `it66121_destroy()` calls
      `component_del()`, which takes the global component mutex — but it was
      invoked from the master unbind callback, which already runs with that
@@ -223,7 +249,7 @@ GPL v2 - See [LICENSE](./LICENSE) file for details.
      by `devm_drm_dev_alloc()`), both of which caused use-after-free on
      disconnect
    - Fixed unbind devres pairing so the teardown callback actually runs
-3. **Fixes found during the port**
+4. **Fixes found during the port**
    - Restored EDID reading through the IT66121 DDC master (EDID FIFO), now
      via `drm_edid_read_custom()`. The 6.x modernization had replaced it with
      `drm_get_edid()` on the FL2000 I2C bus, which cannot work: the monitor's
@@ -260,7 +286,7 @@ GPL v2 - See [LICENSE](./LICENSE) file for details.
      (`priv->adapter` was never assigned)
    - Interrupt polling work is initialized once at bridge creation, so
      `cancel_delayed_work_sync()` can no longer touch an uninitialized work
-4. **Build system**
+5. **Build system**
    - Replaced deprecated `EXTRA_CFLAGS` with `ccflags-y`
 
 #### Modernization for Kernel 6.x:

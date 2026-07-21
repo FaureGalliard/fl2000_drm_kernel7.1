@@ -91,6 +91,43 @@ static struct fl2000_devs *fl2000_get_devices(struct usb_device *usb_dev)
 	return devs;
 }
 
+static void fl2000_bridge_release(struct device *dev, void *res)
+{
+	struct i2c_client **client = res;
+
+	dev_info(dev, "Destroying IT66121 bridge");
+	it66121_destroy(*client);
+}
+
+/* Create the IT66121 bridge and tie its destruction to the usb_device
+ * lifetime: it must survive component master del/add cycles (USB resets) and
+ * die only when the USB device is actually gone. The devres is released
+ * before the I2C adapter devres (LIFO), so the client is destroyed while its
+ * adapter still exists
+ */
+static int fl2000_bridge_create(struct usb_device *usb_dev, struct fl2000_devs *devs)
+{
+	struct i2c_client *client;
+	struct i2c_client **holder;
+
+	holder = devres_alloc(fl2000_bridge_release, sizeof(*holder), GFP_KERNEL);
+	if (!holder)
+		return -ENOMEM;
+
+	client = it66121_create(devs->adapter);
+	if (IS_ERR(client)) {
+		dev_err(&usb_dev->dev, "Cannot create HDMI bridge (%ld)", PTR_ERR(client));
+		devres_free(holder);
+		return -ENODEV;
+	}
+
+	*holder = client;
+	devres_add(&usb_dev->dev, holder);
+	devs->bridge_client = client;
+
+	return 0;
+}
+
 /* TODO: Halt driver on initialization failure */
 static int fl2000_probe(struct usb_interface *interface, const struct usb_device_id *usb_dev_id)
 {
@@ -112,23 +149,17 @@ static int fl2000_probe(struct usb_interface *interface, const struct usb_device
 			return PTR_ERR(devs);
 	}
 
-	/* (Re)create the IT66121 bridge if missing. Besides the first interface
-	 * probe, this covers rebind after usb_reset_device() (e.g. triggered by
-	 * SCSI timeouts on the dongle's virtual CD-ROM function): the reset
-	 * unbinds and rebinds all interfaces, destroying the bridge on
-	 * disconnect, but the usb_device and 'devs' survive - without
-	 * re-creation here the driver would never bind again until a physical
-	 * replug
+	/* Create the IT66121 bridge if it does not exist yet. Retrying from
+	 * every interface probe covers transient detection failures on cold
+	 * boot. Once created, the bridge component persists for the lifetime of
+	 * the usb_device (across usb_reset_device() unbind/rebind cycles):
+	 * destroying and re-creating it per bind cycle leaves dangling
+	 * component pointers in the aggregate match data and crashes on rebind
 	 */
 	if (!devs->bridge_client) {
-		struct i2c_client *client = it66121_create(devs->adapter);
-
-		if (IS_ERR(client)) {
-			dev_err(&usb_dev->dev, "Cannot create HDMI bridge (%ld)",
-				PTR_ERR(client));
-			return -ENODEV;
-		}
-		devs->bridge_client = client;
+		ret = fl2000_bridge_create(usb_dev, devs);
+		if (ret)
+			return ret;
 	}
 
 	switch (iface_num) {
@@ -166,17 +197,17 @@ static void fl2000_disconnect(struct usb_interface *interface)
 	if (!devs)
 		return;
 
-	if (devs->active_if == FL2000_ALL_IFS) {
+	/* NOTE: the IT66121 bridge component is intentionally NOT destroyed
+	 * here. Disconnect also runs for the transient unbind/rebind cycles of
+	 * usb_reset_device(), where the usb_device (and the I2C adapter and
+	 * aggregate match data) survive: the component must persist across
+	 * those. Its destruction is a devres of the usb_device, see
+	 * fl2000_bridge_create(). Destroying it from the master unbind path is
+	 * also forbidden - component_del() would self-deadlock on the global
+	 * component mutex held across the unbind callback
+	 */
+	if (devs->active_if == FL2000_ALL_IFS)
 		component_master_del(&devs->adapter->dev, &fl2000_master_ops);
-
-		/* Destroy IT66121 only after component_master_del() has
-		 * returned: it calls component_del(), which takes the global
-		 * component mutex, and that mutex is held across the master
-		 * unbind callback - calling it from there self-deadlocks
-		 */
-		it66121_destroy(devs->bridge_client);
-		devs->bridge_client = NULL;
-	}
 
 	switch (iface_num) {
 	case FL2000_USBIF_AVCONTROL:
@@ -188,14 +219,6 @@ static void fl2000_disconnect(struct usb_interface *interface)
 	default: /* Device does not have any other interfaces */
 		dev_warn(&interface->dev, "What interface %d?", iface_num);
 		break;
-	}
-
-	/* Covers disconnect before all interfaces were probed (master never
-	 * bound); no-op if IT66121 was already destroyed above
-	 */
-	if (!devs->active_if) {
-		it66121_destroy(devs->bridge_client);
-		devs->bridge_client = NULL;
 	}
 }
 
