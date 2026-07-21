@@ -1,0 +1,202 @@
+fl2000 field test - Tue Jul 21 11:12:27 AM -05 2026
+kernel: 7.1.3-arch1-3
+
+=== quirk usb-storage (debe contener 1d5c:2000:i) ===
+1d5c:2000:i
+
+
+=== modulo fl2000 ===
+fl2000                 69632  4
+
+=== adaptador USB ===
+Bus 002 Device 003: ID 1d5c:2000 Fresco Logic FL2000/FL2000DX VGA/DVI/HDMI Adapter
+
+=== esperando tarjeta DRM del fl2000 (max 90s) ===
+tarjeta DRM presente (tras 2s)
+
+=== estado /sys/class/drm ===
+card0
+card0-HDMI-A-2
+card1
+card1-eDP-1
+card1-HDMI-A-1
+renderD128
+version
+/sys/class/drm/card0-HDMI-A-2/status: connected
+/sys/class/drm/card1-eDP-1/status: connected
+/sys/class/drm/card1-HDMI-A-1/status: connected
+
+=== conectores y modos (modetest -c) ===
+opened device `USB-HDMI` on driver `fl2000_drm` (version 0.0.1 at 0)
+Connectors:
+id	encoder	status		name		size (mm)	modes	encoders
+39	38	connected	HDMI-A-2       	480x270		13	38
+  modes:
+	index name refresh (Hz) hdisp hss hse htot vdisp vss vse vtot
+  #0 1920x1080 59.94 1920 2008 2052 2200 1080 1084 1089 1125 148352 flags: phsync, pvsync; type: driver
+  #1 1440x900 59.90 1440 1488 1520 1600 900 903 909 926 88750 flags: phsync, nvsync; type: driver
+  #2 1280x800 59.91 1280 1328 1360 1440 800 803 809 823 71000 flags: phsync, nvsync; type: driver
+  #3 1280x720 60.00 1280 1390 1430 1650 720 725 730 750 74250 flags: phsync, pvsync; type: driver
+  #4 1280x720 59.94 1280 1390 1430 1650 720 725 730 750 74176 flags: phsync, pvsync; type: driver
+  #5 1280x720 50.00 1280 1720 1760 1980 720 725 730 750 74250 flags: phsync, pvsync; type: driver
+  #6 1024x768 60.00 1024 1048 1184 1344 768 771 777 806 65000 flags: nhsync, nvsync; type: driver
+  #7 800x600 60.32 800 840 968 1056 600 601 605 628 40000 flags: phsync, pvsync; type: driver
+  #8 720x576 50.00 720 732 796 864 576 581 586 625 27000 flags: nhsync, nvsync; type: driver
+  #9 720x480 60.00 720 736 798 858 480 489 495 525 27027 flags: nhsync, nvsync; type: driver
+  #10 720x480 59.94 720 736 798 858 480 489 495 525 27000 flags: nhsync, nvsync; type: driver
+  #11 640x480 60.00 640 656 752 800 480 490 492 525 25200 flags: nhsync, nvsync; type: driver
+  #12 640x480 59.94 640 656 752 800 480 490 492 525 25175 flags: nhsync, nvsync; type: driver
+  props:
+	1 EDID:
+		flags: immutable blob
+		blobs:
+
+		value:
+			00ffffffffffff001e6d265a718e0200
+			0518010380301b78ea6275a3554fa027
+			125054210800714081c0810081809500
+			9040a9c0b300023a801871382d40582c
+			4500dd0c1100001e000000fd00383d1e
+			530f000a202020202020000000fc0032
+			324d5035350a202020202020000000ff
+			000a20202020202020202020202001b1
+			02031df14a900403011412051f101323
+			0907078301000065030c001000023a80
+			1871382d40582c4500dd0c1100001e01
+			1d8018711c1620582c2500dd0c110000
+			9e011d007251d01e206e285500dd0c11
+			00001e8c0ad08a20e02d10103e9600dd
+			0c110000180000000000000000000000
+
+=== EDID decodificado (si hay edid-decode) ===
+/sys/class/drm/card0-HDMI-A-2/edid vacio o inexistente
+
+=== PRUEBA DE MODESET: patron de colores 15s en conector 39 modo 1920x1080 ===
+>>> MIRA EL MONITOR LG AHORA - deberian verse barras de colores <<<
+opened device `USB-HDMI` on driver `fl2000_drm` (version 0.0.1 at 0)
+setting mode 1920x1080-59.94Hz on connectors 39, crtc 37
+(anota si se vio el patron y compartelo junto con este log)
+
+=== dmesg (ultimas 120 lineas) ===
+[   10.279286] snd_hda_intel 0000:04:00.1: Handle vga_switcheroo audio client
+[   10.279620] snd_hda_intel 0000:04:00.6: enabling device (0000 -> 0002)
+[   10.284772] hp-wmi hp-wmi: Failed to apply initial fan settings: -22
+[   10.315453] r8169 0000:03:00.0 eno1: renamed from eth0
+[   10.455798] ee1004 3-0050: 512 byte EE1004-compliant SPD EEPROM, read-only
+[   10.457872] ee1004 3-0051: 512 byte EE1004-compliant SPD EEPROM, read-only
+[   10.471689] usbcore: registered new interface driver btusb
+[   10.476615] Bluetooth: hci0: RTL: examining hci_ver=08 hci_rev=000c lmp_ver=08 lmp_subver=8821
+[   10.479611] Bluetooth: hci0: RTL: rom_version status=0 version=1
+[   10.482603] Bluetooth: hci0: RTL: btrtl_initialize: key id 0
+[   10.482611] Bluetooth: hci0: RTL: loading rtl_bt/rtl8821c_fw.bin
+[   10.483842] Bluetooth: hci0: RTL: loading rtl_bt/rtl8821c_config.bin
+[   10.484041] Bluetooth: hci0: RTL: cfg_sz 10, total sz 34926
+[   10.505517] kvm_amd: TSC scaling supported
+[   10.505525] kvm_amd: Nested Virtualization enabled
+[   10.505530] kvm_amd: Nested Paging enabled
+[   10.505536] kvm_amd: LBR virtualization supported
+[   10.505546] kvm_amd: SEV disabled (ASIDs 0 - 15)
+[   10.505550] kvm_amd: SEV-ES disabled (ASIDs 1 - 4294967295)
+[   10.505554] kvm_amd: Virtual VMLOAD VMSAVE supported
+[   10.505557] kvm_amd: Virtual GIF supported
+[   10.519199] snd_hda_codec_alc269 hdaudioC1D0: ALC295: picked fixup  for PCI SSID 103c:0000
+[   10.520041] snd_hda_codec_alc269 hdaudioC1D0: autoconfig for ALC295: line_outs=1 (0x14/0x0/0x0/0x0/0x0) type:speaker
+[   10.520048] snd_hda_codec_alc269 hdaudioC1D0:    speaker_outs=0 (0x0/0x0/0x0/0x0/0x0)
+[   10.520053] snd_hda_codec_alc269 hdaudioC1D0:    hp_outs=1 (0x21/0x0/0x0/0x0/0x0)
+[   10.520058] snd_hda_codec_alc269 hdaudioC1D0:    mono: mono_out=0x0
+[   10.520061] snd_hda_codec_alc269 hdaudioC1D0:    inputs:
+[   10.520065] snd_hda_codec_alc269 hdaudioC1D0:      Internal Mic=0x12
+[   10.520068] snd_hda_codec_alc269 hdaudioC1D0:      Mic=0x19
+[   10.525025] uvcvideo 3-1.2:1.0: Found UVC 1.50 device HP Wide Vision FHD Camera (04ca:7086)
+[   10.535532] uvcvideo 3-1.2:1.2: Found UVC 1.50 device HP Wide Vision FHD Camera (04ca:7086)
+[   10.536755] rtw88_8821ce 0000:02:00.0: enabling device (0000 -> 0003)
+[   10.538022] rtw88_8821ce 0000:02:00.0: Firmware version 24.11.0, H2C version 12
+[   10.539794] usbcore: registered new interface driver uvcvideo
+[   10.566934] psmouse serio1: elantech: assuming hardware version 4 (with firmware version 0x4d5f02)
+[   10.568624] usb 1-3.2: applying playback min mute quirk
+[   10.578796] psmouse serio1: elantech: Synaptics capabilities query result 0x10, 0x1a, 0x0d.
+[   10.586516] intel_rapl_common: Found RAPL domain package
+[   10.586525] intel_rapl_common: Found RAPL domain core
+[   10.589586] psmouse serio1: elantech: Elan sample query result 04, 4d, 86
+[   10.598437] amd_atl: AMD Address Translation Library initialized
+[   10.610576] usb 1-3.2: applying playback min mute quirk
+[   10.613582] usb 1-3.2: applying playback min mute quirk
+[   10.626931] Bluetooth: BNEP (Ethernet Emulation) ver 1.3
+[   10.626939] Bluetooth: BNEP filters: protocol multicast
+[   10.626945] Bluetooth: BNEP socket layer initialized
+[   10.650955] input: ETPS/2 Elantech Touchpad as /devices/platform/i8042/serio1/input/input22
+[   10.657594] usb 1-3.2: applying playback min mute quirk
+[   10.696137] i2c i2c-6: Bridge attached
+[   10.696147] i2c i2c-6: bound 6-004c (ops it66121_component_ops [fl2000])
+[   10.696624] [drm] Initialized fl2000_drm 0.0.1 for i2c-6 on minor 0
+[   10.704504] usbcore: registered new interface driver snd-usb-audio
+[   10.707805] usbcore: registered new interface driver fl2000_usb
+[   10.707763] snd_hda_intel 0000:04:00.1: bound 0000:04:00.0 (ops amdgpu_dm_audio_component_bind_ops [amdgpu])
+[   10.714918] input: HD-Audio Generic HDMI/DP,pcm=3 as /devices/pci0000:00/0000:00:08.1/0000:04:00.1/sound/card0/input24
+[   10.792381] Generic FE-GE Realtek PHY r8169-0-300:00: attached PHY driver (mii_bus:phy_addr=r8169-0-300:00, irq=MAC)
+[   10.939500] r8169 0000:03:00.0 eno1: Link is Down
+[   11.172158] input: HD-Audio Generic Mic as /devices/pci0000:00/0000:00:08.1/0000:04:00.6/sound/card1/input25
+[   11.172345] input: HD-Audio Generic Headphone as /devices/pci0000:00/0000:00:08.1/0000:04:00.6/sound/card1/input26
+[   11.224608] Bluetooth: hci0: RTL: fw version 0x75b8f098
+[   11.346376] ACPI BIOS Error (bug): AE_AML_BUFFER_LIMIT, Index (0x000000032) is beyond end of object (length 0x32) (20251212/exoparg2-393)
+[   11.346389] ACPI Error: Aborting method \_SB.WMID.WQBE due to previous error (AE_AML_BUFFER_LIMIT) (20251212/psparse-529)
+[   11.347247] ACPI BIOS Error (bug): AE_AML_BUFFER_LIMIT, Field [D008] at bit offset/length 128/8 exceeds size of target Buffer (128 bits) (20251212/dsopcode-198)
+[   11.347255] ACPI Error: Aborting method \HWMC due to previous error (AE_AML_BUFFER_LIMIT) (20251212/psparse-529)
+[   11.347266] ACPI Error: Aborting method \_SB.WMID.WMAA due to previous error (AE_AML_BUFFER_LIMIT) (20251212/psparse-529)
+[   11.347276] hp_bioscfg: Returned error 0x300a, "Generic/Other error"
+[   11.373110] Bluetooth: MGMT ver 1.23
+[   11.396171] NET: Registered PF_ALG protocol family
+[   14.298015] i2c 6-004c: DDC not done (-110), status 0x4A
+[   14.446739] i2c 6-004c: EDID block 0 read failed (-110)
+[   14.446752] i2c 6-004c: EDID FIFO read failed, trying direct DDC read
+[   15.118756] i2c 6-004c: EDID read ok, monitor is HDMI
+[   16.619215] rfkill: input handler disabled
+[   16.780148] wlan0: authenticate with 84:78:48:fe:fa:82 (local address=e8:6f:38:14:d9:b7)
+[   16.821463] wlan0: send auth to 84:78:48:fe:fa:82 (try 1/3)
+[   16.862688] wlan0: authenticate with 84:78:48:fe:fa:82 (local address=e8:6f:38:14:d9:b7)
+[   16.862738] wlan0: send auth to 84:78:48:fe:fa:82 (try 1/3)
+[   16.882237] wlan0: authenticated
+[   16.883384] wlan0: associate with 84:78:48:fe:fa:82 (try 1/3)
+[   16.899330] wlan0: RX AssocResp from 84:78:48:fe:fa:82 (capab=0x1111 status=0 aid=3)
+[   16.899743] wlan0: associated
+[   16.933083] i2c i2c-6: Mode requested:  "1920x1080": 60 148352 1920 2008 2052 2200 1080 1084 1089 1125 0x40 0x5
+[   16.933095] i2c i2c-6: Mode configured: "1920x1080": 60 148333 1920 2008 2052 2200 1080 1084 1089 1125 0x40 0x5
+[   16.946566] wlan0: Limiting TX power to 24 (24 - 0) dBm as advertised by 84:78:48:fe:fa:82
+[   16.952217] i2c i2c-6: Setting AVI infoframe for mode: "1920x1080": 60 148352 1920 2008 2052 2200 1080 1084 1089 1125 0x40 0x5
+[   17.587716] i2c i2c-6: [drm] drm_plane_enable_fb_damage_clips() not called
+[   18.466102] i2c i2c-6: it66121_bridge_enable
+[   18.473706] Bluetooth: RFCOMM TTY layer initialized
+[   18.473717] Bluetooth: RFCOMM socket layer initialized
+[   18.473726] Bluetooth: RFCOMM ver 1.11
+[   20.221389] amdgpu 0000:04:00.0: Fence fallback timer expired on ring gfx
+[   20.253389] amdgpu 0000:04:00.0: Fence fallback timer expired on ring sdma0
+[   32.588679] rfkill: input handler enabled
+[   34.798059] rfkill: input handler disabled
+[   34.889699] block nvme0n1: No UUID available providing old NGUID
+[   41.910372] rtw88_8821ce 0000:02:00.0: firmware failed to leave lps state
+[   44.110410] amdgpu 0000:04:00.0: Fence fallback timer expired on ring sdma0
+[   62.718369] amdgpu 0000:04:00.0: Fence fallback timer expired on ring gfx
+[   62.726380] amdgpu 0000:04:00.0: Fence fallback timer expired on ring sdma0
+[   76.277418] amdgpu 0000:04:00.0: Fence fallback timer expired on ring sdma0
+[   76.917414] rtw88_8821ce 0000:02:00.0: firmware failed to leave lps state
+[   92.750399] amdgpu 0000:04:00.0: Fence fallback timer expired on ring sdma0
+[   92.750435] amdgpu 0000:04:00.0: Fence fallback timer expired on ring gfx
+[  106.486392] amdgpu 0000:04:00.0: Fence fallback timer expired on ring sdma0
+[  106.486407] amdgpu 0000:04:00.0: Fence fallback timer expired on ring gfx
+[  107.957376] rtw88_8821ce 0000:02:00.0: firmware failed to leave lps state
+[  109.037378] amdgpu 0000:04:00.0: Fence fallback timer expired on ring sdma0
+[  109.902400] amdgpu 0000:04:00.0: Fence fallback timer expired on ring sdma0
+[  109.952431] rtw88_8821ce 0000:02:00.0: firmware failed to leave lps state
+[  113.461396] amdgpu 0000:04:00.0: Fence fallback timer expired on ring gfx
+[  113.461397] amdgpu 0000:04:00.0: Fence fallback timer expired on ring sdma0
+[  193.653919] rfkill: input handler enabled
+[  193.702891] fbcon: Taking over console
+[  193.722418] Console: switching to colour frame buffer device 240x67
+[  250.710534] i2c i2c-6: it66121_bridge_disable
+[  250.799471] i2c i2c-6: Mode requested:  "1920x1080": 60 148352 1920 2008 2052 2200 1080 1084 1089 1125 0x40 0x5
+[  250.799489] i2c i2c-6: Mode configured: "1920x1080": 60 148333 1920 2008 2052 2200 1080 1084 1089 1125 0x40 0x5
+[  250.810910] i2c i2c-6: Setting AVI infoframe for mode: "1920x1080": 60 148352 1920 2008 2052 2200 1080 1084 1089 1125 0x40 0x5
+[  251.438654] i2c i2c-6: it66121_bridge_enable
+[  262.583962] i2c i2c-6: it66121_bridge_disable
+
+Listo. Log guardado en docs/field-test-11_12.log - haz commit y push para compartirlo.
