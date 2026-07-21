@@ -249,7 +249,18 @@ GPL v2 - See [LICENSE](./LICENSE) file for details.
      by `devm_drm_dev_alloc()`), both of which caused use-after-free on
      disconnect
    - Fixed unbind devres pairing so the teardown callback actually runs
-4. **Fixes found during the port**
+4. **Switched framebuffers from GEM DMA (CMA) to GEM SHMEM helpers**
+   - The DMA helpers allocate physically contiguous framebuffers
+     (`dma_alloc_wc`), and a 1080p buffer (~8.3 MB) exceeds the kernel's
+     maximum contiguous allocation on x86 without CMA — every dumb buffer
+     creation failed with `Cannot allocate memory`, so no compositor or
+     `modetest` could ever light up the display
+   - The FL2000 never DMAs the framebuffer: `fl2000_stream_compress()` reads
+     it with the CPU and repacks it into the driver's own URB buffers, so
+     paged shmem memory (as used by the in-tree USB display drivers udl,
+     gm12u320, gud) is the correct choice; the dirty path now vmaps the
+     framebuffer with `drm_gem_fb_vmap()`
+5. **Fixes found during the port**
    - Restored EDID reading through the IT66121 DDC master (EDID FIFO), now
      via `drm_edid_read_custom()`. The 6.x modernization had replaced it with
      `drm_get_edid()` on the FL2000 I2C bus, which cannot work: the monitor's
@@ -286,7 +297,7 @@ GPL v2 - See [LICENSE](./LICENSE) file for details.
      (`priv->adapter` was never assigned)
    - Interrupt polling work is initialized once at bridge creation, so
      `cancel_delayed_work_sync()` can no longer touch an uninitialized work
-5. **Build system**
+6. **Build system**
    - Replaced deprecated `EXTRA_CFLAGS` with `ccflags-y`
 
 #### Modernization for Kernel 6.x:

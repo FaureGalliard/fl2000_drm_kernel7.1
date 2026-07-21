@@ -93,7 +93,7 @@ struct fl2000_drm_if {
 	struct fl2000_intr *intr;
 };
 
-DEFINE_DRM_GEM_DMA_FOPS(fl2000_drm_driver_fops);
+DEFINE_DRM_GEM_FOPS(fl2000_drm_driver_fops);
 
 /* Mode config cleanup is managed by drmm_mode_config_init(), and the display
  * pipeline is shut down on unbind, so no .release callback is needed
@@ -102,7 +102,13 @@ static struct drm_driver fl2000_drm_driver = {
 	.driver_features = DRIVER_MODESET | DRIVER_GEM | DRIVER_ATOMIC,
 	.fops = &fl2000_drm_driver_fops,
 
-	DRM_GEM_DMA_DRIVER_OPS_VMAP,
+	/* Paged shmem buffers: the framebuffer is only ever read by the CPU
+	 * (fl2000_stream_compress), never DMA'd to the device, so it does not
+	 * need to be physically contiguous. The DMA (CMA) helpers required
+	 * multi-MB contiguous allocations that reliably fail on x86 without
+	 * CMA ('Cannot allocate memory' on dumb buffer creation)
+	 */
+	DRM_GEM_SHMEM_DRIVER_OPS,
 
 	.name = DRM_DRIVER_NAME,
 	.desc = DRM_DRIVER_DESC,
@@ -292,7 +298,8 @@ static void fb2000_dirty(struct drm_framebuffer *fb, struct drm_rect *rect)
 	int idx;
 	struct drm_device *drm = fb->dev;
 	struct fl2000_drm_if *drm_if = drm->dev_private;
-	struct drm_gem_dma_object *dma_obj = drm_fb_dma_get_gem_obj(fb, 0);
+	struct iosys_map map[DRM_FORMAT_MAX_PLANES];
+	struct iosys_map data[DRM_FORMAT_MAX_PLANES];
 
 	UNUSED(rect);
 
@@ -301,15 +308,22 @@ static void fb2000_dirty(struct drm_framebuffer *fb, struct drm_rect *rect)
 		return;
 	}
 
+	ret = drm_gem_fb_vmap(fb, map, data);
+	if (ret)
+		goto out_exit;
+
 	ret = drm_gem_fb_begin_cpu_access(fb, DMA_FROM_DEVICE);
 	if (ret)
-		return;
+		goto out_vunmap;
 
-	fl2000_stream_compress(drm_if->stream, dma_obj->vaddr, fb->height, fb->width,
+	fl2000_stream_compress(drm_if->stream, data[0].vaddr, fb->height, fb->width,
 			       fb->pitches[0]);
 
 	drm_gem_fb_end_cpu_access(fb, DMA_FROM_DEVICE);
 
+out_vunmap:
+	drm_gem_fb_vunmap(fb, map);
+out_exit:
 	drm_dev_exit(idx);
 }
 
@@ -446,7 +460,6 @@ int fl2000_drm_bind(struct device *master)
 	struct fl2000_drm_if **holder;
 	struct drm_device *drm;
 	struct drm_mode_config *mode_config;
-	u64 dma_mask;
 
 	dev_info(master, "Binding FL2000 master");
 
@@ -471,14 +484,6 @@ int fl2000_drm_bind(struct device *master)
 	mode_config->max_width = FL20000_MAX_WIDTH;
 	mode_config->min_height = 1;
 	mode_config->max_height = FL20000_MAX_HEIGHT;
-
-	/* Set DMA mask for DRM device from mask of the 'parent' USB device */
-	dma_mask = dma_get_mask(&usb_dev->dev);
-	ret = dma_set_coherent_mask(drm->dev, dma_mask);
-	if (ret) {
-		dev_err(drm->dev, "Cannot set DRM device DMA mask (%d)", ret);
-		return ret;
-	}
 
 	ret = drm_simple_display_pipe_init(drm, &drm_if->pipe, &fl2000_display_funcs,
 					   fl2000_pixel_formats, ARRAY_SIZE(fl2000_pixel_formats),

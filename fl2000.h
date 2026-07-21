@@ -23,12 +23,13 @@
 #include <linux/time.h>
 #include <linux/device.h>
 
+#include <linux/iosys-map.h>
+
 #include <drm/drm_device.h>
 #include <drm/drm_drv.h>
 #include <drm/drm_gem.h>
-#include <drm/drm_gem_dma_helper.h>
+#include <drm/drm_gem_shmem_helper.h>
 #include <drm/drm_gem_framebuffer_helper.h>
-#include <drm/drm_fb_dma_helper.h>
 #include <drm/drm_fb_helper.h>
 #include <drm/drm_framebuffer.h>
 #include <drm/drm_fourcc.h>
