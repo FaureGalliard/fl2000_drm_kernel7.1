@@ -1,0 +1,156 @@
+fl2000 field test - Tue Jul 21 10:37:24 AM -05 2026
+kernel: 7.1.3-arch1-3
+
+=== quirk usb-storage (debe contener 1d5c:2000:i) ===
+1d5c:2000:i
+
+
+=== modulo fl2000 ===
+fl2000                 69632  2
+
+=== adaptador USB ===
+>>> CONECTA EL ADAPTADOR AHORA (con el monitor encendido) <<<
+
+=== esperando tarjeta DRM del fl2000 (max 60s) ===
+ERROR: la tarjeta DRM del fl2000 nunca aparecio.
+Si el adaptador estaba conectado desde el arranque: desconectalo,
+espera 5s, reconectalo y vuelve a correr este script.
+
+=== estado /sys/class/drm ===
+card1
+card1-eDP-1
+card1-HDMI-A-1
+renderD128
+version
+/sys/class/drm/card1-eDP-1/status: connected
+/sys/class/drm/card1-HDMI-A-1/status: connected
+
+=== conectores y modos (modetest -c) ===
+failed to open device 'fl2000_drm' with busid '(null)': No such file or directory
+
+=== EDID decodificado (si hay edid-decode) ===
+/sys/class/drm/card*-HDMI-A-2/edid vacio o inexistente
+
+=== dmesg (ultimas 120 lineas) ===
+[   10.110921] r8169 0000:03:00.0 eno1: renamed from eth0
+[   10.182448] ee1004 3-0050: 512 byte EE1004-compliant SPD EEPROM, read-only
+[   10.184368] ee1004 3-0051: 512 byte EE1004-compliant SPD EEPROM, read-only
+[   10.261619] snd_hda_intel 0000:04:00.1: enabling device (0000 -> 0002)
+[   10.262653] snd_hda_intel 0000:04:00.1: Handle vga_switcheroo audio client
+[   10.262846] snd_hda_intel 0000:04:00.6: enabling device (0000 -> 0002)
+[   10.270128] usbcore: registered new interface driver btusb
+[   10.271428] Bluetooth: hci0: RTL: examining hci_ver=08 hci_rev=000c lmp_ver=08 lmp_subver=8821
+[   10.274431] Bluetooth: hci0: RTL: rom_version status=0 version=1
+[   10.277429] Bluetooth: hci0: RTL: btrtl_initialize: key id 0
+[   10.277438] Bluetooth: hci0: RTL: loading rtl_bt/rtl8821c_fw.bin
+[   10.278581] Bluetooth: hci0: RTL: loading rtl_bt/rtl8821c_config.bin
+[   10.278751] Bluetooth: hci0: RTL: cfg_sz 10, total sz 34926
+[   10.283121] kvm_amd: TSC scaling supported
+[   10.283128] kvm_amd: Nested Virtualization enabled
+[   10.283132] kvm_amd: Nested Paging enabled
+[   10.283136] kvm_amd: LBR virtualization supported
+[   10.283143] kvm_amd: SEV disabled (ASIDs 0 - 15)
+[   10.283146] kvm_amd: SEV-ES disabled (ASIDs 1 - 4294967295)
+[   10.283150] kvm_amd: Virtual VMLOAD VMSAVE supported
+[   10.283152] kvm_amd: Virtual GIF supported
+[   10.288104] uvcvideo 3-1.2:1.0: Found UVC 1.50 device HP Wide Vision FHD Camera (04ca:7086)
+[   10.299400] usb 1-3.2: applying playback min mute quirk
+[   10.300669] psmouse serio1: elantech: assuming hardware version 4 (with firmware version 0x4d5f02)
+[   10.304157] uvcvideo 3-1.2:1.2: Found UVC 1.50 device HP Wide Vision FHD Camera (04ca:7086)
+[   10.307501] usbcore: registered new interface driver uvcvideo
+[   10.311449] psmouse serio1: elantech: Synaptics capabilities query result 0x10, 0x1a, 0x0d.
+[   10.316002] rtw88_8821ce 0000:02:00.0: enabling device (0000 -> 0003)
+[   10.317438] rtw88_8821ce 0000:02:00.0: Firmware version 24.11.0, H2C version 12
+[   10.322256] psmouse serio1: elantech: Elan sample query result 04, 4d, 86
+[   10.339387] usb 1-3.2: applying playback min mute quirk
+[   10.342387] usb 1-3.2: applying playback min mute quirk
+[   10.353303] snd_hda_codec_alc269 hdaudioC2D0: ALC295: picked fixup  for PCI SSID 103c:0000
+[   10.353915] snd_hda_codec_alc269 hdaudioC2D0: autoconfig for ALC295: line_outs=1 (0x14/0x0/0x0/0x0/0x0) type:speaker
+[   10.353924] snd_hda_codec_alc269 hdaudioC2D0:    speaker_outs=0 (0x0/0x0/0x0/0x0/0x0)
+[   10.353929] snd_hda_codec_alc269 hdaudioC2D0:    hp_outs=1 (0x21/0x0/0x0/0x0/0x0)
+[   10.353933] snd_hda_codec_alc269 hdaudioC2D0:    mono: mono_out=0x0
+[   10.353937] snd_hda_codec_alc269 hdaudioC2D0:    inputs:
+[   10.353940] snd_hda_codec_alc269 hdaudioC2D0:      Internal Mic=0x12
+[   10.353944] snd_hda_codec_alc269 hdaudioC2D0:      Mic=0x19
+[   10.357928] intel_rapl_common: Found RAPL domain package
+[   10.357935] intel_rapl_common: Found RAPL domain core
+[   10.368155] amd_atl: AMD Address Translation Library initialized
+[   10.383886] input: ETPS/2 Elantech Touchpad as /devices/platform/i8042/serio1/input/input21
+[   10.386390] usb 1-3.2: applying playback min mute quirk
+[   10.417678] Bluetooth: BNEP (Ethernet Emulation) ver 1.3
+[   10.417687] Bluetooth: BNEP filters: protocol multicast
+[   10.417695] Bluetooth: BNEP socket layer initialized
+[   10.435520] usbcore: registered new interface driver snd-usb-audio
+[   10.488301] i2c i2c-6: Bridge attached
+[   10.488313] i2c i2c-6: bound 6-004c (ops it66121_component_ops [fl2000])
+[   10.488639] [drm] Initialized fl2000_drm 0.0.1 for i2c-6 on minor 0
+[   10.500773] usbcore: registered new interface driver fl2000_usb
+[   10.500704] snd_hda_intel 0000:04:00.1: bound 0000:04:00.0 (ops amdgpu_dm_audio_component_bind_ops [amdgpu])
+[   10.505481] input: HD-Audio Generic HDMI/DP,pcm=3 as /devices/pci0000:00/0000:00:08.1/0000:04:00.1/sound/card1/input24
+[   10.584371] Generic FE-GE Realtek PHY r8169-0-300:00: attached PHY driver (mii_bus:phy_addr=r8169-0-300:00, irq=MAC)
+[   10.741455] r8169 0000:03:00.0 eno1: Link is Down
+[   11.001583] input: HD-Audio Generic Mic as /devices/pci0000:00/0000:00:08.1/0000:04:00.6/sound/card2/input25
+[   11.001718] input: HD-Audio Generic Headphone as /devices/pci0000:00/0000:00:08.1/0000:04:00.6/sound/card2/input26
+[   11.019420] Bluetooth: hci0: RTL: fw version 0x75b8f098
+[   11.137589] ACPI BIOS Error (bug): AE_AML_BUFFER_LIMIT, Index (0x000000032) is beyond end of object (length 0x32) (20251212/exoparg2-393)
+[   11.137604] ACPI Error: Aborting method \_SB.WMID.WQBE due to previous error (AE_AML_BUFFER_LIMIT) (20251212/psparse-529)
+[   11.138595] ACPI BIOS Error (bug): AE_AML_BUFFER_LIMIT, Field [D008] at bit offset/length 128/8 exceeds size of target Buffer (128 bits) (20251212/dsopcode-198)
+[   11.138604] ACPI Error: Aborting method \HWMC due to previous error (AE_AML_BUFFER_LIMIT) (20251212/psparse-529)
+[   11.138615] ACPI Error: Aborting method \_SB.WMID.WMAA due to previous error (AE_AML_BUFFER_LIMIT) (20251212/psparse-529)
+[   11.138626] hp_bioscfg: Returned error 0x300a, "Generic/Other error"
+[   11.164888] Bluetooth: MGMT ver 1.23
+[   11.188666] NET: Registered PF_ALG protocol family
+[   14.134955] i2c 6-004c: DDC not done (-110), status 0x4A
+[   14.288952] i2c 6-004c: EDID block 0 read failed (-110)
+[   14.288966] i2c 6-004c: EDID FIFO read failed, trying direct DDC read
+[   14.960974] i2c 6-004c: EDID read ok, monitor is HDMI
+[   16.351608] rfkill: input handler disabled
+[   16.508232] wlan0: authenticate with 84:78:48:fe:fa:82 (local address=e8:6f:38:14:d9:b7)
+[   16.549410] wlan0: send auth to 84:78:48:fe:fa:82 (try 1/3)
+[   16.588218] wlan0: authenticate with 84:78:48:fe:fa:82 (local address=e8:6f:38:14:d9:b7)
+[   16.588267] wlan0: send auth to 84:78:48:fe:fa:82 (try 1/3)
+[   16.605733] wlan0: authenticated
+[   16.606371] wlan0: associate with 84:78:48:fe:fa:82 (try 1/3)
+[   16.622691] wlan0: RX AssocResp from 84:78:48:fe:fa:82 (capab=0x1111 status=0 aid=3)
+[   16.623190] wlan0: associated
+[   16.667131] wlan0: Limiting TX power to 24 (24 - 0) dBm as advertised by 84:78:48:fe:fa:82
+[   17.523087] gsd-media-keys[698]: segfault at 0 ip 000055b29da6cc7d sp 00007ffd3eeddf00 error 4 in gsd-media-keys[1dc7d,55b29da57000+17000] likely on CPU 6 (core 3, socket 0)
+[   17.523107] Code: 8b 55 a8 48 8d 35 77 2e 00 00 49 8b 7a 38 ff 15 d1 df 00 00 4c 89 ff 48 89 c6 e8 2e 70 ff ff 4c 8b 55 a8 4c 89 ff 49 8b 42 30 <48> 8b 30 e8 bb 70 ff ff 85 db 4c 8b 55 a8 0f 85 17 0b 00 00 48 8b
+[   17.575265] Bluetooth: RFCOMM TTY layer initialized
+[   17.575279] Bluetooth: RFCOMM socket layer initialized
+[   17.575289] Bluetooth: RFCOMM ver 1.11
+[   27.371625] rfkill: input handler enabled
+[   29.549696] rfkill: input handler disabled
+[   29.601574] block nvme0n1: No UUID available providing old NGUID
+[   32.377683] logitech-hidpp-device 0003:046D:4054.0003: HID++ 4.5 device connected.
+[  103.630157] rfkill: input handler enabled
+[  103.685641] fbcon: Taking over console
+[  103.700130] Console: switching to colour frame buffer device 240x67
+[  153.218159] usb 1-3: USB disconnect, device number 3
+[  153.218177] usb 1-3.2: USB disconnect, device number 6
+[  153.249018] usb 2-3: USB disconnect, device number 3
+[  153.270597] i2c 6-004c: Cannot read interrupt status (-5)
+[  153.270717] i2c i2c-6: Unbinding FL2000 master
+[  153.271677] i2c 6-004c: Unbinding IT66121 component
+[  153.272086] usb 2-3: Stopping interrupts
+[  153.307396] usb 2-3: Destroying IT66121 bridge
+[  153.307533] usb 2-3: Releasing I2C adapter
+[  262.583177] usb 1-3: new high-speed USB device number 7 using xhci_hcd
+[  262.708290] usb 1-3: New USB device found, idVendor=1a40, idProduct=0101, bcdDevice= 1.00
+[  262.708306] usb 1-3: New USB device strings: Mfr=0, Product=1, SerialNumber=0
+[  262.708313] usb 1-3: Product: USB2.0 HUB
+[  262.743511] hub 1-3:1.0: USB hub found
+[  262.743798] hub 1-3:1.0: 4 ports detected
+[  263.641878] usb 1-3.2: new full-speed USB device number 8 using xhci_hcd
+[  263.837732] usb 1-3.2: New USB device found, idVendor=0d8c, idProduct=0012, bcdDevice= 1.00
+[  263.837749] usb 1-3.2: New USB device strings: Mfr=1, Product=2, SerialNumber=0
+[  263.837757] usb 1-3.2: Product: USB Audio Device
+[  263.837765] usb 1-3.2: Manufacturer: C-Media Electronics Inc.
+[  264.027190] usb 1-3.2: applying playback min mute quirk
+[  264.066736] usb 1-3.2: applying playback min mute quirk
+[  264.069716] usb 1-3.2: applying playback min mute quirk
+[  264.112732] usb 1-3.2: applying playback min mute quirk
+[  264.164349] input: C-Media Electronics Inc. USB Audio Device as /devices/pci0000:00/0000:00:08.1/0000:04:00.3/usb1/1-3/1-3.2/1-3.2:1.3/0003:0D8C:0012.0005/input/input27
+[  264.215824] hid-generic 0003:0D8C:0012.0005: input,hidraw3: USB HID v1.00 Device [C-Media Electronics Inc. USB Audio Device] on usb-0000:04:00.3-3.2/input3
+
+Listo. Log guardado en docs/field-test-10_37.log - haz commit y push para compartirlo.
