@@ -1,0 +1,202 @@
+fl2000 field test - Tue Jul 21 10:47:39 AM -05 2026
+kernel: 7.1.3-arch1-3
+
+=== quirk usb-storage (debe contener 1d5c:2000:i) ===
+1d5c:2000:i
+
+
+=== modulo fl2000 ===
+fl2000                 69632  1
+
+=== adaptador USB ===
+Bus 002 Device 003: ID 1d5c:2000 Fresco Logic FL2000/FL2000DX VGA/DVI/HDMI Adapter
+
+=== esperando tarjeta DRM del fl2000 (max 90s) ===
+tarjeta DRM presente (tras 2s)
+
+=== estado /sys/class/drm ===
+card0
+card0-HDMI-A-2
+card1
+card1-eDP-1
+card1-HDMI-A-1
+renderD128
+version
+/sys/class/drm/card0-HDMI-A-2/status: connected
+/sys/class/drm/card1-eDP-1/status: connected
+/sys/class/drm/card1-HDMI-A-1/status: connected
+
+=== conectores y modos (modetest -c) ===
+opened device `USB-HDMI` on driver `fl2000_drm` (version 0.0.1 at 0)
+Connectors:
+id	encoder	status		name		size (mm)	modes	encoders
+39	0	connected	HDMI-A-2       	480x270		13	38
+  modes:
+	index name refresh (Hz) hdisp hss hse htot vdisp vss vse vtot
+  #0 1920x1080 59.94 1920 2008 2052 2200 1080 1084 1089 1125 148352 flags: phsync, pvsync; type: driver
+  #1 1440x900 59.90 1440 1488 1520 1600 900 903 909 926 88750 flags: phsync, nvsync; type: driver
+  #2 1280x800 59.91 1280 1328 1360 1440 800 803 809 823 71000 flags: phsync, nvsync; type: driver
+  #3 1280x720 60.00 1280 1390 1430 1650 720 725 730 750 74250 flags: phsync, pvsync; type: driver
+  #4 1280x720 59.94 1280 1390 1430 1650 720 725 730 750 74176 flags: phsync, pvsync; type: driver
+  #5 1280x720 50.00 1280 1720 1760 1980 720 725 730 750 74250 flags: phsync, pvsync; type: driver
+  #6 1024x768 60.00 1024 1048 1184 1344 768 771 777 806 65000 flags: nhsync, nvsync; type: driver
+  #7 800x600 60.32 800 840 968 1056 600 601 605 628 40000 flags: phsync, pvsync; type: driver
+  #8 720x576 50.00 720 732 796 864 576 581 586 625 27000 flags: nhsync, nvsync; type: driver
+  #9 720x480 60.00 720 736 798 858 480 489 495 525 27027 flags: nhsync, nvsync; type: driver
+  #10 720x480 59.94 720 736 798 858 480 489 495 525 27000 flags: nhsync, nvsync; type: driver
+  #11 640x480 60.00 640 656 752 800 480 490 492 525 25200 flags: nhsync, nvsync; type: driver
+  #12 640x480 59.94 640 656 752 800 480 490 492 525 25175 flags: nhsync, nvsync; type: driver
+  props:
+	1 EDID:
+		flags: immutable blob
+		blobs:
+
+		value:
+			00ffffffffffff001e6d265a718e0200
+			0518010380301b78ea6275a3554fa027
+			125054210800714081c0810081809500
+			9040a9c0b300023a801871382d40582c
+			4500dd0c1100001e000000fd00383d1e
+			530f000a202020202020000000fc0032
+			324d5035350a202020202020000000ff
+			000a20202020202020202020202001b1
+			02031df14a900403011412051f101323
+			0907078301000065030c001000023a80
+			1871382d40582c4500dd0c1100001e01
+			1d8018711c1620582c2500dd0c110000
+			9e011d007251d01e206e285500dd0c11
+			00001e8c0ad08a20e02d10103e9600dd
+			0c110000180000000000000000000000
+
+=== EDID decodificado (si hay edid-decode) ===
+/sys/class/drm/card0-HDMI-A-2/edid vacio o inexistente
+
+=== PRUEBA DE MODESET: patron de colores 15s en conector 39 modo 1920x1080 ===
+>>> MIRA EL MONITOR LG AHORA - deberian verse barras de colores <<<
+failed to create dumb buffer: Cannot allocate memory
+opened device `USB-HDMI` on driver `fl2000_drm` (version 0.0.1 at 0)
+(anota si se vio el patron y compartelo junto con este log)
+
+=== dmesg (ultimas 120 lineas) ===
+[   10.030498] fl2000: loading out-of-tree module taints kernel.
+[   10.030508] fl2000: module verification failed: signature and/or required key missing - tainting kernel
+[   10.070410] RAPL PMU: API unit is 2^-32 Joules, 2 fixed counters, 163840 ms ovfl timer
+[   10.070417] RAPL PMU: hw unit of domain package 2^-16 Joules
+[   10.070420] RAPL PMU: hw unit of domain core 2^-16 Joules
+[   10.086259] piix4_smbus 0000:00:14.0: SMBus Host Controller at 0xb00, revision 0
+[   10.086268] piix4_smbus 0000:00:14.0: Using register 0x02 for SMBus port selection
+[   10.089383] i2c i2c-3: Successfully instantiated SPD at 0x50
+[   10.090416] i2c i2c-3: Successfully instantiated SPD at 0x51
+[   10.090522] piix4_smbus 0000:00:14.0: Auxiliary SMBus Host Controller at 0xb20
+[   10.091115] r8169 0000:03:00.0: enabling device (0000 -> 0003)
+[   10.091264] r8169 0000:03:00.0: can't disable ASPM; OS doesn't have ASPM control
+[   10.094734] acpi_cpufreq: overriding BIOS provided _PSD data
+[   10.095249] i2c i2c-6: Binding FL2000 master
+[   10.095802] i2c 6-004c: Binding IT66121 component
+[   10.096412] cfg80211: Loading compiled-in X.509 certificates for regulatory database
+[   10.104226] videodev: Linux video capture interface: v2.00
+[   10.105452] Loaded X.509 cert 'sforshee: 00b28ddf47aef9cea7'
+[   10.105687] Loaded X.509 cert 'wens: 61c038651aabdcf94bd0ac7ff06c7248db18c600'
+[   10.107165] faux_driver regulatory: Direct firmware load for regulatory.db failed with error -2
+[   10.107173] cfg80211: failed to load regulatory.db
+[   10.109605] r8169 0000:03:00.0 eth0: RTL8168h/8111h, 04:0e:3c:c7:32:f7, XID 541, IRQ 66
+[   10.109615] r8169 0000:03:00.0 eth0: jumbo features [frames: 9194 bytes, tx checksumming: ko]
+[   10.123849] input: HP WMI hotkeys as /devices/virtual/input/input23
+[   10.124440] sp5100_tco: SP5100/SB800 TCO WatchDog Timer Driver
+[   10.124597] sp5100-tco sp5100-tco: Using 0xfeb00000 for watchdog MMIO address
+[   10.138914] sp5100-tco sp5100-tco: initialized. heartbeat=60 sec (nowayout=0)
+[   10.144147] hp-wmi hp-wmi: Failed to apply initial fan settings: -22
+[   10.166215] snd_hda_intel 0000:04:00.1: enabling device (0000 -> 0002)
+[   10.166327] snd_hda_intel 0000:04:00.1: Handle vga_switcheroo audio client
+[   10.167491] snd_hda_intel 0000:04:00.6: enabling device (0000 -> 0002)
+[   10.214593] r8169 0000:03:00.0 eno1: renamed from eth0
+[   10.224667] Bluetooth: hci0: RTL: examining hci_ver=08 hci_rev=000c lmp_ver=08 lmp_subver=8821
+[   10.227691] Bluetooth: hci0: RTL: rom_version status=0 version=1
+[   10.230666] Bluetooth: hci0: RTL: btrtl_initialize: key id 0
+[   10.230675] Bluetooth: hci0: RTL: loading rtl_bt/rtl8821c_fw.bin
+[   10.231814] Bluetooth: hci0: RTL: loading rtl_bt/rtl8821c_config.bin
+[   10.231966] Bluetooth: hci0: RTL: cfg_sz 10, total sz 34926
+[   10.236750] usbcore: registered new interface driver btusb
+[   10.303632] usb 1-3.2: applying playback min mute quirk
+[   10.339706] ee1004 3-0050: 512 byte EE1004-compliant SPD EEPROM, read-only
+[   10.341716] ee1004 3-0051: 512 byte EE1004-compliant SPD EEPROM, read-only
+[   10.344652] usb 1-3.2: applying playback min mute quirk
+[   10.348374] usb 1-3.2: applying playback min mute quirk
+[   10.349191] uvcvideo 3-1.2:1.0: Found UVC 1.50 device HP Wide Vision FHD Camera (04ca:7086)
+[   10.361615] kvm_amd: TSC scaling supported
+[   10.361622] kvm_amd: Nested Virtualization enabled
+[   10.361626] kvm_amd: Nested Paging enabled
+[   10.361629] kvm_amd: LBR virtualization supported
+[   10.361637] kvm_amd: SEV disabled (ASIDs 0 - 15)
+[   10.361640] kvm_amd: SEV-ES disabled (ASIDs 1 - 4294967295)
+[   10.361644] kvm_amd: Virtual VMLOAD VMSAVE supported
+[   10.361646] kvm_amd: Virtual GIF supported
+[   10.362105] uvcvideo 3-1.2:1.2: Found UVC 1.50 device HP Wide Vision FHD Camera (04ca:7086)
+[   10.366758] usbcore: registered new interface driver uvcvideo
+[   10.378030] snd_hda_codec_alc269 hdaudioC1D0: ALC295: picked fixup  for PCI SSID 103c:0000
+[   10.378995] snd_hda_codec_alc269 hdaudioC1D0: autoconfig for ALC295: line_outs=1 (0x14/0x0/0x0/0x0/0x0) type:speaker
+[   10.379006] snd_hda_codec_alc269 hdaudioC1D0:    speaker_outs=0 (0x0/0x0/0x0/0x0/0x0)
+[   10.379010] snd_hda_codec_alc269 hdaudioC1D0:    hp_outs=1 (0x21/0x0/0x0/0x0/0x0)
+[   10.379015] snd_hda_codec_alc269 hdaudioC1D0:    mono: mono_out=0x0
+[   10.379019] snd_hda_codec_alc269 hdaudioC1D0:    inputs:
+[   10.379022] snd_hda_codec_alc269 hdaudioC1D0:      Internal Mic=0x12
+[   10.379026] snd_hda_codec_alc269 hdaudioC1D0:      Mic=0x19
+[   10.395648] usb 1-3.2: applying playback min mute quirk
+[   10.403859] rtw88_8821ce 0000:02:00.0: enabling device (0000 -> 0003)
+[   10.405205] rtw88_8821ce 0000:02:00.0: Firmware version 24.11.0, H2C version 12
+[   10.422441] psmouse serio1: elantech: assuming hardware version 4 (with firmware version 0x4d5f02)
+[   10.435046] psmouse serio1: elantech: Synaptics capabilities query result 0x10, 0x1a, 0x0d.
+[   10.437438] intel_rapl_common: Found RAPL domain package
+[   10.437445] intel_rapl_common: Found RAPL domain core
+[   10.442973] usbcore: registered new interface driver snd-usb-audio
+[   10.445846] psmouse serio1: elantech: Elan sample query result 04, 4d, 86
+[   10.447285] amd_atl: AMD Address Translation Library initialized
+[   10.495245] Bluetooth: BNEP (Ethernet Emulation) ver 1.3
+[   10.495254] Bluetooth: BNEP filters: protocol multicast
+[   10.495261] Bluetooth: BNEP socket layer initialized
+[   10.503690] input: ETPS/2 Elantech Touchpad as /devices/platform/i8042/serio1/input/input22
+[   10.603570] i2c i2c-6: Bridge attached
+[   10.603578] i2c i2c-6: bound 6-004c (ops it66121_component_ops [fl2000])
+[   10.603990] [drm] Initialized fl2000_drm 0.0.1 for i2c-6 on minor 0
+[   10.614877] usbcore: registered new interface driver fl2000_usb
+[   10.614772] snd_hda_intel 0000:04:00.1: bound 0000:04:00.0 (ops amdgpu_dm_audio_component_bind_ops [amdgpu])
+[   10.618534] input: HD-Audio Generic HDMI/DP,pcm=3 as /devices/pci0000:00/0000:00:08.1/0000:04:00.1/sound/card0/input24
+[   10.651379] Generic FE-GE Realtek PHY r8169-0-300:00: attached PHY driver (mii_bus:phy_addr=r8169-0-300:00, irq=MAC)
+[   10.806456] r8169 0000:03:00.0 eno1: Link is Down
+[   10.975669] Bluetooth: hci0: RTL: fw version 0x75b8f098
+[   11.026146] input: HD-Audio Generic Mic as /devices/pci0000:00/0000:00:08.1/0000:04:00.6/sound/card1/input25
+[   11.026247] input: HD-Audio Generic Headphone as /devices/pci0000:00/0000:00:08.1/0000:04:00.6/sound/card1/input26
+[   11.123120] Bluetooth: MGMT ver 1.23
+[   11.138552] NET: Registered PF_ALG protocol family
+[   11.211876] ACPI BIOS Error (bug): AE_AML_BUFFER_LIMIT, Index (0x000000032) is beyond end of object (length 0x32) (20251212/exoparg2-393)
+[   11.211892] ACPI Error: Aborting method \_SB.WMID.WQBE due to previous error (AE_AML_BUFFER_LIMIT) (20251212/psparse-529)
+[   11.212914] ACPI BIOS Error (bug): AE_AML_BUFFER_LIMIT, Field [D008] at bit offset/length 128/8 exceeds size of target Buffer (128 bits) (20251212/dsopcode-198)
+[   11.212924] ACPI Error: Aborting method \HWMC due to previous error (AE_AML_BUFFER_LIMIT) (20251212/psparse-529)
+[   11.212936] ACPI Error: Aborting method \_SB.WMID.WMAA due to previous error (AE_AML_BUFFER_LIMIT) (20251212/psparse-529)
+[   11.212947] hp_bioscfg: Returned error 0x300a, "Generic/Other error"
+[   13.841445] i2c 6-004c: DDC not done (-110), status 0x4A
+[   13.990980] i2c 6-004c: EDID block 0 read failed (-110)
+[   13.990993] i2c 6-004c: EDID FIFO read failed, trying direct DDC read
+[   14.662988] i2c 6-004c: EDID read ok, monitor is HDMI
+[   16.024642] rfkill: input handler disabled
+[   16.817340] wlan0: authenticate with 84:78:48:fe:fa:82 (local address=e8:6f:38:14:d9:b7)
+[   16.859401] wlan0: send auth to 84:78:48:fe:fa:82 (try 1/3)
+[   16.900755] wlan0: authenticate with 84:78:48:fe:fa:82 (local address=e8:6f:38:14:d9:b7)
+[   16.900802] wlan0: send auth to 84:78:48:fe:fa:82 (try 1/3)
+[   16.919277] wlan0: authenticated
+[   16.921382] wlan0: associate with 84:78:48:fe:fa:82 (try 1/3)
+[   16.938410] wlan0: RX AssocResp from 84:78:48:fe:fa:82 (capab=0x1111 status=0 aid=3)
+[   16.938786] wlan0: associated
+[   17.017665] wlan0: Limiting TX power to 24 (24 - 0) dBm as advertised by 84:78:48:fe:fa:82
+[   17.288752] Bluetooth: RFCOMM TTY layer initialized
+[   17.288764] Bluetooth: RFCOMM socket layer initialized
+[   17.288772] Bluetooth: RFCOMM ver 1.11
+[   20.736555] rfkill: input handler enabled
+[   22.917776] rfkill: input handler disabled
+[   23.078258] block nvme0n1: No UUID available providing old NGUID
+[   23.316905] logitech-hidpp-device 0003:046D:4054.0003: HID++ 4.5 device connected.
+[   79.760837] rfkill: input handler enabled
+[   79.816026] fbcon: Taking over console
+[   79.822509] Console: switching to colour frame buffer device 240x67
+
+Listo. Log guardado en docs/field-test-10_47.log - haz commit y push para compartirlo.
