@@ -249,7 +249,22 @@ GPL v2 - See [LICENSE](./LICENSE) file for details.
      by `devm_drm_dev_alloc()`), both of which caused use-after-free on
      disconnect
    - Fixed unbind devres pairing so the teardown callback actually runs
-4. **Switched framebuffers from GEM DMA (CMA) to GEM SHMEM helpers**
+4. **Fixed system-wide stalls while streaming (interrupts disabled too long)**
+   - `fl2000_stream_compress()` (full-frame pixel conversion) and the resend
+     `memcpy()` in `fl2000_stream_work()` ran while holding `list_lock`, which
+     is taken with `spin_lock_irq()` (interrupts disabled). Each is several MB
+     of work per frame, so interrupts were disabled for milliseconds at a
+     time, continuously — starving the rest of the system. The AMD GPU logged
+     `Fence fallback timer expired` repeatedly and the whole desktop (both the
+     laptop panel and the USB display) turned laggy. The heavy data operations
+     now run with the buffer owned but the lock released; only the list
+     pointer updates stay under the lock
+   - Fixed two `spin_unlock()` calls that were paired with `spin_lock_irq()`
+     (in the compress and disable paths), which left interrupts disabled on
+     return
+   - Enabled the plane's `FB_DAMAGE_CLIPS` property that the update path
+     already relies on (silences a DRM warning)
+5. **Switched framebuffers from GEM DMA (CMA) to GEM SHMEM helpers**
    - The DMA helpers allocate physically contiguous framebuffers
      (`dma_alloc_wc`), and a 1080p buffer (~8.3 MB) exceeds the kernel's
      maximum contiguous allocation on x86 without CMA — every dumb buffer
@@ -260,7 +275,7 @@ GPL v2 - See [LICENSE](./LICENSE) file for details.
      paged shmem memory (as used by the in-tree USB display drivers udl,
      gm12u320, gud) is the correct choice; the dirty path now vmaps the
      framebuffer with `drm_gem_fb_vmap()`
-5. **Fixes found during the port**
+6. **Fixes found during the port**
    - Restored EDID reading through the IT66121 DDC master (EDID FIFO), now
      via `drm_edid_read_custom()`. The 6.x modernization had replaced it with
      `drm_get_edid()` on the FL2000 I2C bus, which cannot work: the monitor's
@@ -297,7 +312,7 @@ GPL v2 - See [LICENSE](./LICENSE) file for details.
      (`priv->adapter` was never assigned)
    - Interrupt polling work is initialized once at bridge creation, so
      `cancel_delayed_work_sync()` can no longer touch an uninitialized work
-6. **Build system**
+7. **Build system**
    - Replaced deprecated `EXTRA_CFLAGS` with `ccflags-y`
 
 #### Modernization for Kernel 6.x:

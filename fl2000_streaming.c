@@ -191,25 +191,45 @@ static void fl2000_stream_work(struct work_struct *work)
 
 		spin_lock_irq(&stream->list_lock);
 
-		/* If no buffers are available for immediate transmission - then copy latest
-		 * transmission data
-		 */
-		if (list_empty(&stream->transmit_list)) {
-			if (list_empty(&stream->wait_list))
-				last_sb = list_last_entry(&stream->render_list,
-							  struct fl2000_stream_buf, list);
-			else
-				last_sb = list_last_entry(&stream->wait_list,
-							  struct fl2000_stream_buf, list);
-			cur_sb = list_first_entry(&stream->render_list, struct fl2000_stream_buf,
-						  list);
-			memcpy(cur_sb->vaddr, last_sb->vaddr, stream->buf_size);
-		} else {
+		if (!list_empty(&stream->transmit_list)) {
+			/* A freshly rendered frame is ready: just move it in-flight */
 			cur_sb = list_first_entry(&stream->transmit_list, struct fl2000_stream_buf,
 						  list);
+			list_move_tail(&cur_sb->list, &stream->wait_list);
+			spin_unlock_irq(&stream->list_lock);
+		} else if (!list_empty(&stream->render_list)) {
+			/* No new frame: resend the latest one. Take a free buffer and
+			 * copy the last frame into it. The copy is several MB and MUST
+			 * run with interrupts enabled, so cur_sb is taken off all lists
+			 * (owned) for the duration and re-inserted afterwards. Holding
+			 * list_lock (which disables IRQs) across the memcpy starves the
+			 * whole system, e.g. amdgpu IRQs -> fence fallback timers
+			 */
+			cur_sb = list_first_entry(&stream->render_list, struct fl2000_stream_buf,
+						  list);
+			if (!list_empty(&stream->wait_list))
+				last_sb = list_last_entry(&stream->wait_list,
+							  struct fl2000_stream_buf, list);
+			else
+				last_sb = list_last_entry(&stream->render_list,
+							  struct fl2000_stream_buf, list);
+			list_del_init(&cur_sb->list);
+			spin_unlock_irq(&stream->list_lock);
+
+			/* For a static desktop last_sb holds the same image, so an
+			 * occasional torn copy from a recycled source is invisible
+			 */
+			if (last_sb != cur_sb)
+				memcpy(cur_sb->vaddr, last_sb->vaddr, stream->buf_size);
+
+			spin_lock_irq(&stream->list_lock);
+			list_add_tail(&cur_sb->list, &stream->wait_list);
+			spin_unlock_irq(&stream->list_lock);
+		} else {
+			/* No buffer available at all - should not happen */
+			spin_unlock_irq(&stream->list_lock);
+			continue;
 		}
-		list_move_tail(&cur_sb->list, &stream->wait_list);
-		spin_unlock_irq(&stream->list_lock);
 
 		data_urb = usb_alloc_urb(0, GFP_KERNEL);
 		if (!data_urb) {
@@ -265,11 +285,22 @@ void fl2000_stream_compress(struct fl2000_stream *stream, void *src, unsigned in
 	void *dst;
 	u32 dst_line_len;
 
-	BUG_ON(list_empty(&stream->render_list));
-
+	/* Take a free buffer and own it (off all lists) for the conversion */
 	spin_lock_irq(&stream->list_lock);
-
+	if (list_empty(&stream->render_list)) {
+		/* No free buffer: drop this frame rather than crash */
+		spin_unlock_irq(&stream->list_lock);
+		return;
+	}
 	cur_sb = list_first_entry(&stream->render_list, struct fl2000_stream_buf, list);
+	list_del_init(&cur_sb->list);
+	spin_unlock_irq(&stream->list_lock);
+
+	/* A whole-frame pixel format conversion is several MB of work and MUST
+	 * run with interrupts enabled - holding list_lock (which disables IRQs)
+	 * across it starves the system (e.g. amdgpu IRQs -> fence fallback
+	 * timers, laggy desktop). cur_sb is owned here so no lock is needed
+	 */
 	dst = cur_sb->vaddr;
 	dst_line_len = width * stream->bytes_pix;
 
@@ -288,8 +319,9 @@ void fl2000_stream_compress(struct fl2000_stream *stream, void *src, unsigned in
 		dst += dst_line_len;
 	}
 
-	list_move_tail(&cur_sb->list, &stream->transmit_list);
-	spin_unlock(&stream->list_lock);
+	spin_lock_irq(&stream->list_lock);
+	list_add_tail(&cur_sb->list, &stream->transmit_list);
+	spin_unlock_irq(&stream->list_lock);
 }
 
 int fl2000_stream_mode_set(struct fl2000_stream *stream, int pixels, u32 bytes_pix)
@@ -358,7 +390,7 @@ void fl2000_stream_disable(struct fl2000_stream *stream)
 		cur_sb = list_first_entry(&stream->wait_list, struct fl2000_stream_buf, list);
 		list_move_tail(&cur_sb->list, &stream->render_list);
 	}
-	spin_unlock(&stream->list_lock);
+	spin_unlock_irq(&stream->list_lock);
 }
 
 /**

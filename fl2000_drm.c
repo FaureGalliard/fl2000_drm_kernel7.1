@@ -493,6 +493,11 @@ int fl2000_drm_bind(struct device *master)
 		return ret;
 	}
 
+	/* Enable the damage-clips property the update path relies on
+	 * (drm_atomic_helper_damage_merged); also silences a DRM warning
+	 */
+	drm_plane_enable_fb_damage_clips(&drm_if->pipe.plane);
+
 	/* Register 'mode_set' function to operate prior to bridge */
 	drm_encoder_helper_add(&drm_if->pipe.encoder, &fl2000_encoder_funcs);
 
