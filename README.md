@@ -343,6 +343,7 @@ GPL v2 - See [LICENSE](./LICENSE) file for details.
 
 ## Links
 
+- [Development notes](./docs/DEVELOPMENT.md) - Hardware map, DDC status decoding and bug history
 - [GitHub Wiki](https://github.com/Samuv5/fl2000_drm/wiki) - Detailed technical documentation
 - [Original Repository](https://github.com/klogg/fl2000_drm)
 - [Linux DRM Documentation](https://www.kernel.org/doc/html/latest/gpu/drm-kms-helpers.html)
